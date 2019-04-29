@@ -1,0 +1,21 @@
+@import './my-variables';
+
+.a-muted {
+  color: $gray-700 !important;
+  text-decoration: none !important;
+
+  &:hover {
+    color: $gray-800 !important;
+  }
+}
+
+.a-bright {
+  color: $gray-400 !important;
+  text-decoration: none !important;
+
+  &.active,
+  &:hover {
+    color: white !important;
+    border-bottom: solid 1px white;
+  }
+}

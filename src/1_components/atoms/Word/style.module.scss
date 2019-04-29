@@ -1,0 +1,23 @@
+.Word {
+  //box-shadow: #a0a0a0 2px 2px 3px 0;
+  transition: all ease .2s;
+
+  &.active {
+    //box-shadow: #3e5289 0 0 5px 3px;
+    background-color: #fcffca;
+  }
+
+  &:hover {
+    background-color: #fff6ec;
+  }
+
+  tr:first-child {
+    td {
+      border-top: none;
+    }
+  }
+
+  td:first-child {
+    width: 4rem;
+  }
+}

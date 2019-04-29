@@ -1,0 +1,12 @@
+.CardMeaning {
+  transition: all ease .3s;
+
+  .Explanation {
+    font-family: "Roboto", sans-serif;
+
+    &:first-child td {
+      border-top: none !important;
+    }
+  }
+
+}

@@ -1,0 +1,23 @@
+@import '../../node_modules/bootstrap/scss/mixins/breakpoints';
+@import '../../node_modules/bootstrap/scss/functions';
+@import '../../node_modules/bootstrap/scss/variables';
+
+$bg-dark: rgb(73, 78, 84);
+$bg-default: rgba(176, 190, 201, 0.58);
+
+$gray-a: #939393;
+$gray-d7: rgba(82, 82, 82, 0.7);
+$gray-light-d5: rgba(174, 179, 184, 0.5);
+$gray-light-d3: rgba(174, 179, 184, 0.3);
+
+$yellow-light-d8: rgba(255, 244, 168, 0.81);
+
+$blue-dark: rgb(37, 46, 53);
+$blue-dark-a: rgb(52, 78, 99);
+$blue-dark-b: #3c688c;
+
+$breakpoints: (
+  phone: 640px,
+  tablet: 768px,
+  desktop: 1024px
+) !default;

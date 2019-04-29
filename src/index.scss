@@ -1,3 +1,9 @@
+@import-normalize; /* bring in normalize.css styles */
+
+@import "scss/my-atomic";
+@import "scss/my-effects";
+@import "scss/my-shared-styles";
+
 body {
   margin: 0;
   padding: 0;
@@ -6,6 +12,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  background-color: $bg-dark;
 }
 
 code {

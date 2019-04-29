@@ -1,0 +1,29 @@
+.navBarTop {
+
+  .navbarBrand {
+    display: none;
+    position: absolute;
+    left: .4rem;
+
+    img {
+      width: 2.4rem;
+      height: 2.4rem;
+    }
+  }
+
+  .searchBar {
+    width: calc(100% - 72px);
+  }
+
+  @media (min-width: 576px) {
+    padding-left: .25rem !important;
+
+    .navbarBrand {
+      display: inline-block;
+    }
+    .searchBar {
+      width: 60%;
+      margin: 0 auto;
+    }
+  }
+}
