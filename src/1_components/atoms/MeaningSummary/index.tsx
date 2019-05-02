@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { getEWordClassString, IMeaning, MPTypes } from 'myprodict-model/lib-esm';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 interface MeaningSummaryProps {
   word: string;
@@ -14,7 +14,7 @@ class MeaningSummary extends React.Component<MeaningSummaryProps> {
     const {word, meanings} = this.props;
 
     return (
-      <div className={'card ' + style.MeaningSummary}>
+      <div className={'card ' + styles.MeaningSummary}>
         <div className={'card-header bg-warning'}>
           mean(s) of <b>{word}</b>
         </div>

@@ -9,6 +9,7 @@ import { createEpicMiddleware } from 'redux-observable';
 
 import App from '^/App';
 import PageHome from '^/2_containers/pages/PageHome';
+import PageReadAloud from '^/2_containers/pages/PageReadAloud';
 
 // redux-observable epics
 import { rootEpic } from '^/3_store/epics';
@@ -42,8 +43,9 @@ ReactDOM.hydrate(
     <Provider store={store}>
       <Router>
         <div>
-          <Route exact={true} path="/app" component={App}/>
           <Route exact={true} path="/" component={PageHome}/>
+          <Route exact={true} path="/read-aloud" component={PageReadAloud}/>
+          <Route exact={true} path="/app" component={App}/>
         </div>
       </Router>
     </Provider>

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IWord } from 'myprodict-model/lib-esm';
 import { Link } from 'react-router-dom';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 interface SearchInputFieldProps {
   items: IWord[];
@@ -37,7 +37,7 @@ class SearchInputField extends React.Component<SearchInputFieldProps, SearchInpu
 
   render() {
     return (
-      <div className={'pos-r ' + style.searchInputField}>
+      <div className={'pos-r ' + styles.searchInputField}>
         <div className="pos-r">
           <input
             type="text"
@@ -49,7 +49,7 @@ class SearchInputField extends React.Component<SearchInputFieldProps, SearchInpu
             onFocus={() => this.setFocus(true)}
           />
           <div
-            className={style.searchIcon}
+            className={styles.searchIcon}
             onClick={() => this.props.onChange && this.props.onChange(this.state.value)}
           >
             <i className={`fa ${this.props.isSearching ? 'fa-spinner an-spin' : 'fa-search'}`}/>
@@ -57,7 +57,7 @@ class SearchInputField extends React.Component<SearchInputFieldProps, SearchInpu
         </div>
         {this.props.isResultListDisplay && this.state.isFocusing && this.props.items && this.props.items.length > 0 &&
         <div className={'pos-a w-100'} style={{zIndex: 120}}>
-          <div className={style.searchBackdrop} onClick={() => this.setFocus(false)}/>
+          <div className={styles.searchBackdrop} onClick={() => this.setFocus(false)}/>
           <ul className="list-group">
             {this.props.items.map((model: any, index: number) =>
               <Link

@@ -4,9 +4,9 @@ import * as _ from 'lodash-es';
 import { Action, Dispatch } from 'redux';
 import { IMeaningExample, IMeaningUsage, isAdminOrSuperAdmin, IWord } from 'myprodict-model/lib-esm';
 
-import PageLayout from '../_PageLayout';
-
 import { IStoreState } from '^/types';
+
+import PageLayout from '../_PageLayout';
 
 import Word from '^/1_components/atoms/Word';
 import MeaningSummary from '^/1_components/atoms/MeaningSummary';

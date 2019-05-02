@@ -4,7 +4,7 @@ import { isAdminOrSuperAdmin, MPTypes } from 'myprodict-model/lib-esm';
 
 import SearchInputField from '^/1_components/atoms/SearchInputField';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 const LOGO_URL = 'http://d30qxb56opqku1.cloudfront.net/images/logo.png';
 
@@ -23,11 +23,11 @@ const NavBarTop = (
   const items = searchResult.models && searchResult.models.length > 9 ?
     searchResult.models.slice(0, 9) : [];
   return (
-    <nav className={'navbar navbar-expand-lg navbar-dark bg-dark fixed-top ' + style.navBarTop}>
-      <a className={style.navbarBrand} href="/">
+    <nav className={'navbar navbar-expand-lg navbar-dark bg-dark fixed-top ' + styles.navBarTop}>
+      <a className={styles.navbarBrand} href="/">
         <img className="brand" src={LOGO_URL} alt="logo" />
       </a>
-      <div className={style.searchBar}>
+      <div className={styles.searchBar}>
         <SearchInputField
           isSearching={isSearching}
           onChange={onSearchChange}
@@ -35,6 +35,12 @@ const NavBarTop = (
           isResultListDisplay={isResultListDisplay}
         />
       </div>
+      <NavLink to="/read-aloud" className={'a-bright'} activeClassName={'active'} exact={true}>
+        Read Aloud
+      </NavLink>
+      <NavLink to="/app" className={'a-bright'} activeClassName={'active'} exact={true}>
+        App
+      </NavLink>
       <NavLink to="/" className={'a-bright'} activeClassName={'active'} exact={true}>
         <i className={'fa fa-home fa-2x'} />
       </NavLink>

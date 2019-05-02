@@ -2,7 +2,7 @@ import * as React from 'react';
 import { getEWordClassString, IMeaningExample, IMeaningUsage } from 'myprodict-model/lib-esm';
 import * as _ from 'lodash-es';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 interface CardMeaningProps {
   usages: IMeaningUsage[];
@@ -19,7 +19,7 @@ class CardMeaning extends React.Component<CardMeaningProps> {
     usageSubjs.sort((a: string, b: string) => a.length - b.length);
 
     return (
-      <div className={'card ' + style.CardMeaning}>
+      <div className={'card ' + styles.CardMeaning}>
         {meaning && <h5 className={'card-header text-primary'}>{meaning}</h5>}
         <div className={'card-body pt-2 pb-1'}>
           {usageSubjs.map((uSubj, index) =>
@@ -28,7 +28,7 @@ class CardMeaning extends React.Component<CardMeaningProps> {
               <table className={'table table-hover'}>
                 <tbody>
                 {usages.filter(u => u.value.usage === uSubj)
-                  .map(u => <tr key={u.keyid} className={'pl-2 ' + style.Explanation}>
+                  .map(u => <tr key={u.keyid} className={'pl-2 ' + styles.Explanation}>
                     <td>
                       <div className={'pos-r'}>
                         {u.value.explanation}

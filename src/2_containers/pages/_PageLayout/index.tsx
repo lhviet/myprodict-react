@@ -11,7 +11,7 @@ import { IUserState, actionSetLoggedIn } from '^/3_store/ducks/user';
 import { IWordState, actionSearchWordStart } from '^/3_store/ducks/word';
 import { readToken } from '^/4_services/local-storage-service';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 interface PageLayoutProps {
   isResultListDisplay?: boolean; // enable result list to display or not
@@ -58,7 +58,7 @@ class PageLayout extends React.Component<PageLayoutProps> {
   render() {
     const {children, user, word, isResultListDisplay} = this.props;
     return (
-      <div className={style.pageLayout}>
+      <div className={styles.pageLayout}>
         <NavBarTop
           isResultListDisplay={isResultListDisplay || true}
           isSearching={word.isSearching}

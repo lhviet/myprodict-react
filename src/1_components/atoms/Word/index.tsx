@@ -6,7 +6,7 @@ import {
   MPTypes, IWord, IPronunciation, getEWordClassString, getPronunciationSystemString, getLocalString
 } from 'myprodict-model/lib-esm';
 
-import style from './style.module.scss';
+import styles from './styles.module.scss';
 
 interface WordProps {
   word: IWord;
@@ -76,7 +76,7 @@ class Word extends React.Component<WordProps, WordState> {
 
     return (
       <div
-        className={'card ' + (isActive && 'active ') + style.Word}
+        className={'card ' + (isActive && 'active ') + styles.Word}
         onClick={() => onSelectWord && onSelectWord(word.keyid, word.value.word)}
       >
         {link && <Link
