@@ -1,7 +1,10 @@
-import * as React from 'react';
+import React, { ReactNode, RefObject } from 'react';
 import { connect } from 'react-redux';
 import { capitalize } from 'lodash-es';
 import axios from 'axios';
+import moment from 'moment';
+import WaveSurfer from 'wavesurfer.js';
+import Diff from 'diff';
 
 import { IStoreState } from '^/types';
 import { HOST } from '^/app-configs';
@@ -17,6 +20,10 @@ interface State {
   isSpeechAvailable: boolean;
   isRecording: boolean;
   isMicAvailable: boolean;
+  sampleText: string;
+  recognitionText: string;
+  diffText: string;
+  missingWords: Array<string>;
 }
 
 class PageReadAloud extends React.Component<Props, State> {
@@ -25,8 +32,12 @@ class PageReadAloud extends React.Component<Props, State> {
   audioBlob: Blob | undefined;
   speechRecognition: SpeechRecognition | undefined;
 
+  wavesurferRef: RefObject<HTMLDivElement>;
+  wavesurfer: WaveSurfer | undefined;
+
   constructor(props: Props, context: any) {
     super(props, context);
+    this.wavesurferRef = React.createRef();
 
     let isSpeechAvailable: boolean = true;
 
@@ -47,33 +58,60 @@ class PageReadAloud extends React.Component<Props, State> {
           }
         }
         finalTranscript = capitalize(finalTranscript);
-        console.log('finalTranscript = ', finalTranscript);
+        const diffWords = Diff.diffWords(this.state.sampleText, finalTranscript, { ignoreCase: true });
+        let diffText: string = '';
+        const missingWords: Array<string> = [];
+        diffWords.forEach((word: Diff.Change) => {
+          diffText += word.added ? `<u>${word.value}</u>` :
+            (word.removed ? `<b>${word.value}</b>` : word.value) + ' ';
+          if (word.removed) {
+            missingWords.push(word.value);
+          }
+        });
+        diffText = diffText.trim();
+        console.log('diff = ', diffWords);
+        console.log('diffText = ', diffText);
+        this.setState({ recognitionText: finalTranscript, diffText, missingWords });
       };
     }
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
         this.mediaRecorder = new MediaRecorder(stream);
-        this.mediaRecorder.ondataavailable = this.onRecorderDataAvailable;
-        this.mediaRecorder.onstart = this.onRecorderStart;
-        this.mediaRecorder.onstop = this.onRecorderStop;
+        this.mediaRecorder.ondataavailable = (event: BlobEvent) => this.audioChunks.push(event.data);
+        this.mediaRecorder.onstart = () => {
+          this.audioChunks = [];
+          this.setState({ isRecording: true });
+        };
+        this.mediaRecorder.onstop = () => {
+          this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
+          if (this.wavesurfer) {
+            this.wavesurfer.load(URL.createObjectURL(this.audioBlob));
+          }
+          this.setState({ isRecording: false });
+        };
+
         this.setState({ isMicAvailable: true });
       });
 
     this.state = {
-      isSpeechAvailable: true,
+      isSpeechAvailable,
       isMicAvailable: false,
       isRecording: false,
+      sampleText: '',
+      recognitionText: '',
+      diffText: '',
+      missingWords: [],
     };
   }
 
-  onRecorderDataAvailable = (event: BlobEvent) => this.audioChunks.push(event.data);
-  onRecorderStart = () => {
-    this.audioChunks = [];
-    this.setState({ isRecording: true });
-  }
-  onRecorderStop = () => {
-    this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
-    this.setState({ isRecording: false });
+  componentDidMount(): void {
+    console.log('wave element = ', this.wavesurferRef.current);
+    this.wavesurfer = WaveSurfer.create({
+      container: this.wavesurferRef.current as HTMLDivElement,
+      waveColor: 'gray',
+      progressColor: 'black',
+      cursorColor: 'black'
+    });
   }
 
   onStartRecording = () => {
@@ -99,8 +137,14 @@ class PageReadAloud extends React.Component<Props, State> {
     }
   }
 
+  handleTextChange = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    this.setState({sampleText: event.currentTarget.value});
+  }
+
   render() {
-    const { isMicAvailable, isSpeechAvailable, isRecording }: State = this.state;
+    const {
+      isMicAvailable, isSpeechAvailable, isRecording, sampleText, recognitionText, diffText, missingWords,
+    }: State = this.state;
     const playAudio = () => {
       if (this.audioBlob) {
         const audioUrl: string = URL.createObjectURL(this.audioBlob);
@@ -114,16 +158,17 @@ class PageReadAloud extends React.Component<Props, State> {
     };
     const downloadAudio = () => {
       if (this.audioBlob) {
+        const timestamp: string = moment().format('HHmm-DDMMYYYY');
         const audioUrl: string = URL.createObjectURL(this.audioBlob);
         const a = document.createElement('a');
         a.href = audioUrl;
-        a.download = `read-aloud-${new Date()}.mp3`;
+        a.download = `ra-${timestamp}.mp3`;
         a.click();
         window.URL.revokeObjectURL(audioUrl);
       }
     };
 
-    const microphoneIcon: React.ReactNode = isSpeechAvailable ? (
+    const microphoneIcon: ReactNode = isSpeechAvailable ? (
       isRecording ? (
         <i
           className={'fa fa-microphone fa-2x text-muted an-pulse-btn ' + styles.micBtn}
@@ -138,8 +183,8 @@ class PageReadAloud extends React.Component<Props, State> {
     return (
       <PageLayout>
         <div className={styles.pageReadAloud}>
-          <textarea style={{width: '100%', height: '250px'}}>
-            Therefore, the working unions in modern society are not very important. They preserve their functions only in the underdeveloped countries. On the contrary, in the developed states, workers refuse to join the unions, preferring individual work. Thus, working unions cannot survive the assault of modern economic trends and slowly move to a complete decline. Their initial purposes have little to do with the hectic pace of modern life.
+          <textarea style={{width: '100%', height: '250px'}} onChange={this.handleTextChange} >
+            {sampleText}
           </textarea>
         </div>
         <div className={'text-right'}>
@@ -147,6 +192,18 @@ class PageReadAloud extends React.Component<Props, State> {
           <button className={'btn btn-primary'} onClick={downloadAudio}>Download</button>
           {microphoneIcon}
         </div>
+
+        <div ref={this.wavesurferRef} />
+
+        Your Recognized Speech:
+        <div>{recognitionText}</div>
+
+        Diff Text
+        <div dangerouslySetInnerHTML={{__html: diffText}} />
+
+        <hr />
+        <b>The words you pronounced incorrectly:</b>
+        <div>{missingWords.toString()}</div>
       </PageLayout>
     );
   }
