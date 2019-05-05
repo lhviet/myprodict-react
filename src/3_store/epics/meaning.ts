@@ -4,7 +4,6 @@ import { filter, map, switchMap } from 'rxjs/operators';
 import * as _ from 'lodash-es';
 import { MEANING__SAVE, MEANING__SEARCH, actionSearchMeansOfWord } from '../ducks/meaning';
 import { IStoreState } from '^/types';
-import { of } from 'rxjs/internal/observable/of';
 import { actionSetCurrentWordId } from '../ducks/word';
 import { actionSearchExamples } from '../ducks/meaning_usage_example';
 
@@ -19,13 +18,13 @@ export const epicSetCurrentWordWithUsages = (
     if (models.length) {
       const currentWord: any = _.find(state$.value.word.searchResult.models, {keyid: models[0].value.word_keyid});
       if (currentWord) {
-        return of(
+        return [
           actionSetCurrentWordId(currentWord.keyid),
           actionSearchExamples(currentWord.value.word),
-        );
+        ];
       }
     }
-    return of({type: 'done'});
+    return [{type: 'done'}];
   })
 );
 

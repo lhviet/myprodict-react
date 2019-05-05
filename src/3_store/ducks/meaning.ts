@@ -4,7 +4,6 @@ import { HOST } from '^/app-configs';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
-import { of } from 'rxjs/internal/observable/of';
 import { AnyAction } from 'redux';
 
 import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
@@ -39,7 +38,7 @@ const epicSearchMeansOfWord = (action$: ActionsObservable<AnyAction>) => action$
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.search), data, headerJson).pipe(
       map(({response}) => createActionDone(MEANING__SEARCH, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING__SEARCH, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__SEARCH, ajaxError)])
     );
   }),
 );
@@ -54,7 +53,7 @@ const epicDeleteMean = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.delete), data, headerAuth(readToken())).pipe(
       map(({response}) => createActionDone(MEANING__DELETE, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING__DELETE, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__DELETE, ajaxError)])
     );
   }),
 );
@@ -66,7 +65,7 @@ const epicSaveMean = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.save), data, headerAuth(readToken())).pipe(
       map(({response}) => createActionDone(MEANING__SAVE, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING__SAVE, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__SAVE, ajaxError)])
     );
   }),
 );

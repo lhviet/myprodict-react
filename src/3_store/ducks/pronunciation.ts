@@ -3,7 +3,6 @@ import * as _ from 'lodash-es';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
-import { of } from 'rxjs/internal/observable/of';
 import { AnyAction } from 'redux';
 
 import { HOST } from '^/app-configs';
@@ -37,7 +36,7 @@ const epicDeletePron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.delete), data, headerAuth(readToken())).pipe(
       map(({response}) => createActionDone(PRON__DELETE, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(PRON__DELETE, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__DELETE, ajaxError)])
     );
   }),
 );
@@ -52,7 +51,7 @@ const epicFetchPron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.search), data, headerJson).pipe(
       map(({response}) => createActionDone(PRON__FETCH, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(PRON__FETCH, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__FETCH, ajaxError)])
     );
   }),
 );
@@ -64,7 +63,7 @@ const epicSavePron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.save), data, headerAuth(readToken())).pipe(
       map(({response}) => createActionDone(PRON__SAVE, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(PRON__SAVE, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__SAVE, ajaxError)])
     );
   }),
 );
@@ -82,7 +81,7 @@ const epicSearchPronOfWord = (action$: ActionsObservable<AnyAction>) => action$.
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.search), data, headerJson).pipe(
       map(({response}) => createActionDone(PRON__OF_WORD_FETCH, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(PRON__OF_WORD_FETCH, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__OF_WORD_FETCH, ajaxError)])
     );
   }),
 );

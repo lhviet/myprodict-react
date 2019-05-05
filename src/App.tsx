@@ -2,8 +2,6 @@ import React from 'react';
 import logo from './logo.svg';
 import styles from './App.module.scss';
 
-import Button from 'react-bootstrap/Button';
-
 const App: React.FC = () => {
   return (
     <div className={styles.App}>
@@ -20,7 +18,6 @@ const App: React.FC = () => {
         >
           Learn React
         </a>
-        <Button variant="primary">Primary</Button>
         <small>The application is running in <b>{process.env.NODE_ENV}</b> mode.</small>
       </header>
     </div>

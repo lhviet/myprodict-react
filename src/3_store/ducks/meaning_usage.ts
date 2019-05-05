@@ -3,7 +3,6 @@ import * as _ from 'lodash-es';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs/internal/observable/of';
 import { AnyAction } from 'redux';
 
 import { HOST } from '^/app-configs';
@@ -40,7 +39,7 @@ const epicSearchUsagesOfWord = (action$: ActionsObservable<AnyAction>) => action
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage.search), data, headerJson).pipe(
       map(({response}) => createActionDone(MEANING_USAGE__SEARCH, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE__SEARCH, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__SEARCH, ajaxError)])
     );
   }),
 );
@@ -58,7 +57,7 @@ const epicDeleteUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     headerAuth(readToken()),
   ).pipe(
     map(({response}) => createActionDone(MEANING_USAGE__DELETE, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE__DELETE, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__DELETE, ajaxError)])
   )),
 );
 
@@ -72,7 +71,7 @@ const epicSaveUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     headerAuth(readToken())
   ).pipe(
     map(({response}) => createActionDone(MEANING_USAGE__SAVE, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE__SAVE, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__SAVE, ajaxError)])
   )),
 );
 

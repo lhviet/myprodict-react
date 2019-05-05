@@ -1,40 +1,44 @@
-import * as React from 'react';
+import React  from 'react';
 import { NavLink } from 'react-router-dom';
 import { isAdminOrSuperAdmin, MPTypes } from 'myprodict-model/lib-esm';
+import styled from 'styled-components';
 
-import SearchInputField from '^/1_components/atoms/SearchInputField';
-
-import styles from './styles.module.scss';
+import { colors } from '^/theme';
 
 const LOGO_URL = 'http://d30qxb56opqku1.cloudfront.net/images/logo.png';
 
+const Root = styled.nav`
+  display: flex;
+  justify-content: flex-start;
+  height: 2rem;
+  padding: .5rem .8rem;
+  background-color: ${colors.bgDark.toString()};  
+`;
+const NavBrandLink = styled.a`
+  line-height: 0;
+`;
+const NavBrandIcon = styled.img.attrs({
+  alt: 'logo',
+  src: LOGO_URL,
+})`
+  width: 2rem;
+  height: 2rem;
+`;
+
 interface NavBarTopProps {
-  isResultListDisplay: boolean; // enable result list to display or not
-  isSearching: boolean;
-  searchResult: any;
   isLoggedIn: boolean;
   userRole: MPTypes.UserRole;
-  onSearchChange(keyword: string): any;
+  className?: string;
 }
 
-const NavBarTop = (
-  { isLoggedIn, isSearching, isResultListDisplay, userRole, searchResult, onSearchChange }: NavBarTopProps
+const NavBarTop: React.FunctionComponent<NavBarTopProps> = (
+  { isLoggedIn, userRole, className }: NavBarTopProps
 ) => {
-  const items = searchResult.models && searchResult.models.length > 9 ?
-    searchResult.models.slice(0, 9) : [];
   return (
-    <nav className={'navbar navbar-expand-lg navbar-dark bg-dark fixed-top ' + styles.navBarTop}>
-      <a className={styles.navbarBrand} href="/">
-        <img className="brand" src={LOGO_URL} alt="logo" />
-      </a>
-      <div className={styles.searchBar}>
-        <SearchInputField
-          isSearching={isSearching}
-          onChange={onSearchChange}
-          items={items}
-          isResultListDisplay={isResultListDisplay}
-        />
-      </div>
+    <Root className={className}>
+      <NavBrandLink href="/">
+        <NavBrandIcon />
+      </NavBrandLink>
       <NavLink to="/read-aloud" className={'a-bright'} activeClassName={'active'} exact={true}>
         Read Aloud
       </NavLink>
@@ -52,7 +56,7 @@ const NavBarTop = (
           <i className={'fa fa-list-ul fa-2x text-warning'} />
         </NavLink>
       </div>}
-    </nav>
+    </Root>
   );
 };
 

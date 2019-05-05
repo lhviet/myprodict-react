@@ -1,10 +1,12 @@
-@import '../../node_modules/bootstrap/scss/mixins/breakpoints';
-@import '../../node_modules/bootstrap/scss/functions';
-@import '../../node_modules/bootstrap/scss/variables';
+$spacer: 0.25rem;
 
 $bg-dark: rgb(73, 78, 84);
 $bg-default: rgba(176, 190, 201, 0.58);
 
+$gray-300: #939393;
+$gray-400: #939393;
+$gray-700: #939393;
+$gray-800: #939393;
 $gray-a: #939393;
 $gray-d7: rgba(82, 82, 82, 0.7);
 $gray-light-d5: rgba(174, 179, 184, 0.5);

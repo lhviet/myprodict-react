@@ -2,7 +2,6 @@ import { AnyAction } from 'redux';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
-import { of } from 'rxjs/internal/observable/of';
 import { MPTypes } from 'myprodict-model/lib-esm';
 
 import { HOST } from '^/app-configs';
@@ -63,7 +62,7 @@ const epicLogout = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(() => {
     return ajax.post(HOST.api.getUrl(HOST.api.user.logout)).pipe(
       map(({response}) => createActionDone(USER__AUTH_SET_LOGGED_OUT, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(USER__AUTH_SET_LOGGED_OUT, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(USER__AUTH_SET_LOGGED_OUT, ajaxError)])
     );
   }),
 );
@@ -81,7 +80,7 @@ const epicFetchUserInfo1 = (action$: ActionsObservable<AnyAction>) => action$.pi
   switchMap(() => {
     return fetchUserData1().pipe(
       map(({response}) => createActionDone(USER__FETCH_INFO, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(USER__FETCH_INFO, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(USER__FETCH_INFO, ajaxError)])
     );
   }),
 );
@@ -90,7 +89,7 @@ const epicFetchUserInfo2 = (action$: ActionsObservable<AnyAction>) => action$.pi
   switchMap(() => {
     return fetchUserData2().pipe(
       map(({response}) => createActionDone(USER__FETCH_INFO, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(USER__FETCH_INFO, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(USER__FETCH_INFO, ajaxError)])
     );
   }),
 );

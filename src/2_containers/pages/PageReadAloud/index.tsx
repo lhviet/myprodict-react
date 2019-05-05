@@ -1,38 +1,110 @@
 import React, { ReactNode, RefObject } from 'react';
+import { Action, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { capitalize } from 'lodash-es';
 import axios from 'axios';
 import moment from 'moment';
 import WaveSurfer from 'wavesurfer.js';
-import Diff from 'diff';
+import * as Diff from 'diff';
+import { IWord } from 'myprodict-model/lib-esm';
+import styled from 'styled-components';
 
 import { IStoreState } from '^/types';
 import { HOST } from '^/app-configs';
 
+import Word from '^/1_components/atoms/Word';
+import { IWordState, actionSearchMatchWordStart } from '^/3_store/ducks/word';
 import PageLayout from '../_PageLayout';
 
-import styles from './styles.module.scss';
+import { colors } from '^/theme';
+
+const Root = styled.div`
+  position: relative;
+  width: 80%;
+  max-width: 800px;
+  min-width: 300px;
+  margin: 0 auto;
+  padding: 1rem .5rem;
+`;
+const TextArea = styled.textarea.attrs({
+  placeholder: 'Paste or type the sentences you want to practice here.',
+  rows: 4,
+})`
+  width: 100%;
+`;
+const WaveSurferTableWrapper = styled.table`
+  position: relative;
+  background-color: white;
+  border: none;
+  width: 100%;
+`;
+const WaveSurferControlCol = styled.td`
+  width: 20%;
+`;
+const WaveSurferContainer = styled.td`
+  width: 80%;
+`;
+const RecognitionTextWrapper = styled.div`
+  background-color: white;
+`;
+const DiffTextWrapper = styled.div`
+  background-color: white;
+  font-size: 1.1rem;
+`;
+const DiffTextCorrect = styled.span`
+  color: ${colors.blue.toString()};
+`;
+const DiffTextMissed = styled.span`
+  color: ${colors.red.toString()};
+`;
+const DiffTextAdded = styled.span`
+  color: ${colors.grey.toString()};
+  text-decoration: line-through;
+  margin-left: .2rem;
+`;
+const MicBtn = styled.i`
+  font-size: 2rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  text-align: center;    
+  cursor: pointer;
+  padding: 0.1rem;
+  border: solid 1px transparent;
+  border-radius: 50%;
+  color: ${colors.grey.alpha(.8).toString()};
+`;
+const PlayBtn = styled.i`
+  font-size: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  text-align: center;    
+  cursor: pointer;
+  padding: 0.1rem;
+  border: solid 1px transparent;
+  border-radius: 50%;
+  color: ${colors.grey.alpha(.8).toString()};
+`;
 
 interface Props {
+  word: IWordState;
+  searchWord(words: Array<string>): any;
 }
-
 interface State {
   isSpeechAvailable: boolean;
   isRecording: boolean;
   isMicAvailable: boolean;
+  isPlaying: boolean;
   sampleText: string;
   recognitionText: string;
-  diffText: string;
-  missingWords: Array<string>;
+  diffWords: Array<Diff.Change>;
 }
-
 class PageReadAloud extends React.Component<Props, State> {
   audioChunks: any[] = [];
   mediaRecorder: MediaRecorder | undefined;
   audioBlob: Blob | undefined;
   speechRecognition: SpeechRecognition | undefined;
 
-  wavesurferRef: RefObject<HTMLDivElement>;
+  wavesurferRef: RefObject<HTMLTableCellElement>;
   wavesurfer: WaveSurfer | undefined;
 
   constructor(props: Props, context: any) {
@@ -59,19 +131,11 @@ class PageReadAloud extends React.Component<Props, State> {
         }
         finalTranscript = capitalize(finalTranscript);
         const diffWords = Diff.diffWords(this.state.sampleText, finalTranscript, { ignoreCase: true });
-        let diffText: string = '';
-        const missingWords: Array<string> = [];
-        diffWords.forEach((word: Diff.Change) => {
-          diffText += word.added ? `<u>${word.value}</u>` :
-            (word.removed ? `<b>${word.value}</b>` : word.value) + ' ';
-          if (word.removed) {
-            missingWords.push(word.value);
-          }
-        });
-        diffText = diffText.trim();
-        console.log('diff = ', diffWords);
-        console.log('diffText = ', diffText);
-        this.setState({ recognitionText: finalTranscript, diffText, missingWords });
+        const missingWords = diffWords
+          .filter(word => word.removed)
+          .map(word => word.value);
+        this.props.searchWord(missingWords);
+        this.setState({ recognitionText: finalTranscript, diffWords });
       };
     }
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -97,20 +161,28 @@ class PageReadAloud extends React.Component<Props, State> {
       isSpeechAvailable,
       isMicAvailable: false,
       isRecording: false,
+      isPlaying: false,
       sampleText: '',
       recognitionText: '',
-      diffText: '',
-      missingWords: [],
+      diffWords: [],
     };
   }
 
   componentDidMount(): void {
-    console.log('wave element = ', this.wavesurferRef.current);
     this.wavesurfer = WaveSurfer.create({
-      container: this.wavesurferRef.current as HTMLDivElement,
+      container: this.wavesurferRef.current as HTMLTableCellElement,
       waveColor: 'gray',
       progressColor: 'black',
-      cursorColor: 'black'
+      cursorColor: 'black',
+      barHeight: 1.3,
+      height: 60,
+      hideScrollbar: true,
+    });
+    this.wavesurfer.on('finish', () => {
+      if (this.wavesurfer) {
+        this.wavesurfer.stop();
+      }
+      this.setState({ isPlaying: false });
     });
   }
 
@@ -141,9 +213,16 @@ class PageReadAloud extends React.Component<Props, State> {
     this.setState({sampleText: event.currentTarget.value});
   }
 
+  playPauseWaveSurfer = () => {
+    if (this.wavesurfer) {
+      this.wavesurfer.playPause();
+      this.setState((prevState) => ({ isPlaying: !prevState.isPlaying }));
+    }
+  }
+
   render() {
     const {
-      isMicAvailable, isSpeechAvailable, isRecording, sampleText, recognitionText, diffText, missingWords,
+      isMicAvailable, isSpeechAvailable, isRecording, isPlaying, sampleText, recognitionText, diffWords,
     }: State = this.state;
     const playAudio = () => {
       if (this.audioBlob) {
@@ -170,49 +249,89 @@ class PageReadAloud extends React.Component<Props, State> {
 
     const microphoneIcon: ReactNode = isSpeechAvailable ? (
       isRecording ? (
-        <i
-          className={'fa fa-microphone fa-2x text-muted an-pulse-btn ' + styles.micBtn}
-          onClick={this.onStopRecording}
-        />
+        <MicBtn className={'fa fa-microphone an-pulse-btn'} onClick={this.onStopRecording} />
       ) : (
-        <i className={'fa fa-microphone fa-2x'} onClick={this.onStartRecording} />
+        <MicBtn className={'fa fa-microphone'} onClick={this.onStartRecording} />
       )
     ) : (
-      <i className={'fa fa-microphone-slash fa-2x'} />
+      <MicBtn className={'fa fa-microphone-slash'} />
     );
+
+    const waveIconClassName: string = `fa ${isPlaying ? 'fa-pause' : 'fa-play'}`;
+
+    const words: IWord[] = this.props.word.readAloudWords || [];
+
+    const speechResult: ReactNode = diffWords.map(({ value, added, removed }, index) => {
+      return added ? (
+        <DiffTextAdded key={index}>{value}</DiffTextAdded>
+      ) : (removed ? (
+        <DiffTextMissed key={index}>{value}</DiffTextMissed>
+      ) : (
+        <DiffTextCorrect key={index}>{value}</DiffTextCorrect>
+      ));
+    });
+
     return (
       <PageLayout>
-        <div className={styles.pageReadAloud}>
-          <textarea style={{width: '100%', height: '250px'}} onChange={this.handleTextChange} >
-            {sampleText}
-          </textarea>
-        </div>
-        <div className={'text-right'}>
-          <button className={'btn btn-primary'} onClick={playAudio}>Save</button>
-          <button className={'btn btn-primary'} onClick={downloadAudio}>Download</button>
-          {microphoneIcon}
-        </div>
+        <Root>
+          <TextArea onChange={this.handleTextChange}>{sampleText}</TextArea>
 
-        <div ref={this.wavesurferRef} />
+          <div>
+            <button className={'btn btn-primary'} onClick={playAudio}>Save</button>
+            <button className={'btn btn-primary'} onClick={downloadAudio}>Download</button>
+            {microphoneIcon}
+          </div>
 
-        Your Recognized Speech:
-        <div>{recognitionText}</div>
+          <WaveSurferTableWrapper>
+            <tbody>
+              <tr>
+                <WaveSurferControlCol>
+                  <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
+                </WaveSurferControlCol>
+                <WaveSurferContainer ref={this.wavesurferRef} />
+              </tr>
+            </tbody>
+          </WaveSurferTableWrapper>
 
-        Diff Text
-        <div dangerouslySetInnerHTML={{__html: diffText}} />
+          <RecognitionTextWrapper>
+            <div><b>Your Speech:</b></div>
+            {recognitionText}
+          </RecognitionTextWrapper>
 
-        <hr />
-        <b>The words you pronounced incorrectly:</b>
-        <div>{missingWords.toString()}</div>
+          <DiffTextWrapper>
+            <div><b>Diff Text:</b></div>
+            {speechResult}
+          </DiffTextWrapper>
+
+          <hr />
+          <b>Incorrect words:</b>
+          {words.map((model: IWord) => {
+            return <div key={model.keyid} className={'mb-3 word'}>
+              <Word
+                word={model}
+                prons={[]}
+                isActive={false}
+                meaningNumber={0}
+                usageNumber={0}
+                onSelectWord={() => console.log('onSelectWord')}
+                link={`/word/${model.value.custom_url}`}
+              />
+            </div>;
+          })}
+        </Root>
       </PageLayout>
     );
   }
 }
 
 const mapStateToProps = (state: IStoreState) => ({
+  word: state.word,
 });
 
-const mapDispatchToProps = () => ({
+const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
+  searchWord(words: Array<string>) {
+    dispatch(actionSearchMatchWordStart(words));
+  }
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PageReadAloud);

@@ -1,15 +1,49 @@
 import * as React from 'react';
-import { IWord } from 'myprodict-model/lib-esm';
-import { Link } from 'react-router-dom';
+import styled from 'styled-components';
 
-import styles from './styles.module.scss';
+import { colors } from '^/theme';
+import IconWithSpinner, {IconType} from '^/1_components/atoms/IconWithSpinner';
 
-interface SearchInputFieldProps {
-  items: IWord[];
+const Root = styled.div`
+  position: relative;
+  width: 100%;
+`;
+const SearchInput = styled.input.attrs({
+  type: 'text',
+  placeholder: 'Type here to search...',
+  'aria-label': 'search keywords',
+})`
+  display: block;
+  width: calc(100% - 1rem);
+  padding: .5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: ${colors.blue.toString()};
+  background-color: white;
+  background-clip: padding-box;
+  border: none;
+  border-bottom: solid 2px ${colors.grey.alpha(.5).toString()};
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  
+  :hover {
+    border-color: ${colors.green.toString()};
+  }
+`;
+const SearchIcon = styled(IconWithSpinner)`
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  font-size: 1.3rem;
+  color: ${colors.blue.alpha(.8).toString()};
+  cursor: pointer;
+`;
+
+interface Props {
   isSearching?: boolean;
-  isResultListDisplay?: boolean; // enable result list to display or not
   value?: string;
-  onChange?(value: string): void;
+  className?: string;
+  onChange(value: string): void;
 }
 
 interface SearchInputFieldState {
@@ -17,8 +51,8 @@ interface SearchInputFieldState {
   isFocusing: boolean;
 }
 
-class SearchInputField extends React.Component<SearchInputFieldProps, SearchInputFieldState> {
-  constructor(props: SearchInputFieldProps, context: any) {
+class SearchInputField extends React.Component<Props, SearchInputFieldState> {
+  constructor(props: Props, context: any) {
     super(props, context);
     this.state = {
       value: this.props.value || '',
@@ -26,51 +60,26 @@ class SearchInputField extends React.Component<SearchInputFieldProps, SearchInpu
     };
   }
 
-  onChangeValue = (e: React.FormEvent<HTMLInputElement>) => {
+  handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({value: e.currentTarget.value});
-    if (this.props.onChange) {
-      this.props.onChange(e.currentTarget.value);
-    }
+    this.props.onChange(e.currentTarget.value);
   }
+  handleSearch = () => this.props.onChange(this.state.value);
 
   setFocus = (isFocusing: boolean) => this.setState({isFocusing});
 
   render() {
+    const { isSearching, className, onChange }: Props = this.props;
+
     return (
-      <div className={'pos-r ' + styles.searchInputField}>
-        <div className="pos-r">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search here..."
-            aria-label="search keywords"
-            value={this.state.value}
-            onChange={this.onChangeValue}
-            onFocus={() => this.setFocus(true)}
-          />
-          <div
-            className={styles.searchIcon}
-            onClick={() => this.props.onChange && this.props.onChange(this.state.value)}
-          >
-            <i className={`fa ${this.props.isSearching ? 'fa-spinner an-spin' : 'fa-search'}`}/>
-          </div>
-        </div>
-        {this.props.isResultListDisplay && this.state.isFocusing && this.props.items && this.props.items.length > 0 &&
-        <div className={'pos-a w-100'} style={{zIndex: 120}}>
-          <div className={styles.searchBackdrop} onClick={() => this.setFocus(false)}/>
-          <ul className="list-group">
-            {this.props.items.map((model: any, index: number) =>
-              <Link
-                key={model.keyid + index}
-                to={`/word/${model.value.custom_url}`}
-                className={'list-group-item a-muted'}
-              >
-                {model.value.word}
-              </Link>
-            )}
-          </ul>
-        </div>}
-      </div>
+      <Root className={className}>
+        <SearchInput
+          value={this.state.value}
+          onChange={this.handleSearchChange}
+          onFocus={() => this.setFocus(true)}
+        />
+        <SearchIcon iconType={IconType.search} isLoading={isSearching} onClick={this.handleSearch} />
+      </Root>
     );
   }
 }

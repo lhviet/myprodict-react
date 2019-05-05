@@ -1,16 +1,97 @@
-import * as React from 'react';
+import React, { ReactNode } from 'react';
 import * as _ from 'lodash-es';
 import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { getEWordClassString, getLocalString, IPronunciation, IWord, MPTypes } from 'myprodict-model/lib-esm';
 
-import {
-  MPTypes, IWord, IPronunciation, getEWordClassString, getPronunciationSystemString, getLocalString
-} from 'myprodict-model/lib-esm';
+import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
-import styles from './styles.module.scss';
+import { colors } from '^/theme';
+
+interface RootProps {
+  isActive?: boolean;
+}
+const Root = styled.div<RootProps>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: .6rem .5rem;
+  min-height: 4.5rem;
+  word-wrap: break-word;
+  border: 1px solid ${colors.borderGray.alpha(.5).toString()};
+  background-clip: border-box;
+  background-color: ${({ isActive }) => isActive && colors.bgHighlight.toString()};
+  
+  :hover {
+    h3 {
+      color: ${colors.green.toString()};
+    }
+  }
+`;
+const WordLink = styled(Link)`
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: .5rem;
+  color: ${colors.grey.toString()}
+`;
+const Title = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+`;
+const PronunciationTable = styled.table`
+  padding-left: 2rem;
+  border: none;
+`;
+const PronunciationTableRow = styled.tr`
+  >td {
+    border-top: dotted 1px ${colors.borderGray.alpha(.5).toString()};
+  }
+  
+  :first-child {
+    >td {
+      border-top: none;
+    }
+  }
+`;
+const PronunciationTableLocal = styled.td`
+  width: 2rem;
+  font-size: .9rem;
+  color: ${colors.grey.alpha(.8).toString()};
+  padding-top: .25rem;
+`;
+const PronunciationTableTranscript = styled.td``;
+const Transcript = styled.div`
+  position: relative;
+  padding: .6rem 0;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: ${colors.red.toString()};
+`;
+const TranscriptWordClass = styled.span`
+  margin-left: 7px;
+  font-size: .8rem;
+  font-style: italic;
+  color: ${colors.grey.alpha(.8).toString()};
+`;
+const Speaker = styled(IconWithSpinner)`
+  position: absolute;
+  right: 0;
+  top: .5rem;
+  font-size: .9rem;
+`;
+const Footer = styled.div`
+  font-size: .8rem;
+  font-style: italic;
+  color: ${colors.grey.alpha(.8).toString()};
+  margin-top: .2rem;
+`;
 
 interface WordProps {
   word: IWord;
-  prons: IPronunciation[];
+  prons: Array<IPronunciation>;
   isActive?: boolean;
   meaningNumber?: number;
   usageNumber?: number;
@@ -20,16 +101,18 @@ interface WordProps {
 }
 
 interface WordState {
-  isLoadingAudio: boolean;
-  pSystems: MPTypes.PronunciationSystem[];
+  loadingAudio?: string;
+  pSystems: Array<MPTypes.PronunciationSystem>;
+  selectedSystem: MPTypes.PronunciationSystem;
 }
 
 class Word extends React.Component<WordProps, WordState> {
   constructor(props: WordProps, context: any) {
     super(props, context);
     this.state = {
-      isLoadingAudio: false,
+      loadingAudio: undefined,
       pSystems: [],
+      selectedSystem: MPTypes.PronunciationSystem.IPA,
     };
   }
 
@@ -47,16 +130,12 @@ class Word extends React.Component<WordProps, WordState> {
     }
   }
 
-  onClickSpeaker = (e: React.SyntheticEvent<HTMLElement>, word: string, local: string, soundUrl: string) => {
-
-    e.stopPropagation();  // cancel its parent's onClick function
-
-    this.setState({isLoadingAudio: true});
-    const url = soundUrl ||
+  onClickSpeaker = (e: React.SyntheticEvent, word: string, local: string, transcript: IPronunciation) => {
+    const url = transcript.value.sound_url ||
       `https://ssl.gstatic.com/dictionary/static/sounds/20160317/${word}--_${local.toLowerCase()}_1.mp3`;
     new Audio(url).play()
       .then(() => {
-        this.setState({isLoadingAudio: false});
+        this.setState({loadingAudio: undefined});
       })
       .catch(err => {
         const msg = new SpeechSynthesisUtterance();
@@ -66,78 +145,84 @@ class Word extends React.Component<WordProps, WordState> {
         msg.voice = voice;
         msg.text = word;
         speechSynthesis.speak(msg);
-        this.setState({isLoadingAudio: false});
+        this.setState({loadingAudio: undefined});
       });
+    this.setState({loadingAudio: transcript.keyid});
+    e.stopPropagation();  // cancel its parent's onClick function
   }
 
   render() {
-    const {word, prons, isActive, meaningNumber, usageNumber, isEditable, onSelectWord, link } = this.props;
-    const {pSystems} = this.state;
+    const { word, prons, isActive, meaningNumber, usageNumber, isEditable, onSelectWord, link } = this.props;
+    const { selectedSystem, loadingAudio} = this.state;
+
+    const onWordClick = () => {
+      if (onSelectWord) {
+        onSelectWord(word.keyid, word.value.word);
+      }
+      console.log('link = ', link);
+    };
+    const sProns = prons.filter(p => p.value.system === selectedSystem) || [];
+    const locals = _.uniq(sProns.map(p => p.value.local)).sort();
+
+    const linkEdit: ReactNode = isEditable ? (
+      <WordLink to={`/word/edit/${word.value.custom_url}`}>
+        <i className={'fa fa-pencil-square-o'}/>
+      </WordLink>
+    ) : undefined;
+
+    const localTranscripts: ReactNode = locals.map((local) => {
+      const localLabel = getLocalString(local);
+      const transcripts: ReactNode = sProns
+        .filter(p => p.value.local === local)
+        .map((transcript) => {
+          const isLoading: boolean = loadingAudio === transcript.keyid;
+          const onAudioClick = (
+            e: React.SyntheticEvent,
+          ) => this.onClickSpeaker(e, word.value.word, getLocalString(local), transcript);
+
+          return (
+            <Transcript key={transcript.keyid}>
+              {transcript.value.transcript}
+              <TranscriptWordClass>
+                {getEWordClassString(transcript.value.word_class)}
+              </TranscriptWordClass>
+              <Speaker iconType={IconType.speaker} isLoading={isLoading} onClick={onAudioClick} />
+            </Transcript>
+          );
+        });
+
+      return (
+        <PronunciationTableRow key={local}>
+          <PronunciationTableLocal>
+            {localLabel}
+          </PronunciationTableLocal>
+          <PronunciationTableTranscript>
+            {transcripts}
+          </PronunciationTableTranscript>
+        </PronunciationTableRow>
+      );
+    });
+
+    const meaning = meaningNumber && meaningNumber > 0 ?
+      `${meaningNumber} mean${meaningNumber > 1 ? 's' : ''}` : undefined;
+    const usage = usageNumber && usageNumber > 0 ?
+      `${meaning ? ', ' : ''}${usageNumber} usage${usageNumber > 1 ? 's' : ''}` : undefined;
 
     return (
-      <div
-        className={'card ' + (isActive && 'active ') + styles.Word}
-        onClick={() => onSelectWord && onSelectWord(word.keyid, word.value.word)}
-      >
-        {link && <Link
-          to={link}
-          className={'fs-d8e opa-7 pos-a t-0 r-0 p-1'}
-          style={{zIndex: 110}}
-        >
-          <i className={'fa fa-chevron-right'}/>
-        </Link>}
-        <div className="card-body p-2 pr-0 py-sm-0 pl-sm-2">
-          <div className="row no-gutters">
-            <div className="col-12 col-sm-4 d-flex flex-column align-self-center">
-              <h5 className="card-title mb-0">
-                {isEditable && <Link to={'/word/edit/' + word.value.custom_url}>
-                  <i className={'fa fa-pencil-square-o text-muted mr-2 fs-d8e'}/>
-                </Link>}
-                {word.value.word}
-              </h5>
-              {!!meaningNumber &&
-              <div className={'fs-d8e text-muted'}>{meaningNumber} means</div>}
-              {!!usageNumber &&
-              <div className={'fs-d8e text-muted'}>{usageNumber} usages</div>}
-            </div>
-            {pSystems.map(system => {
-              const sProns = prons.filter(p => p.value.system === system) || [];
-              const locals = _.uniq(sProns.map(p => p.value.local)).sort();
-              return <div key={system} className="col-12 col-sm-8">
-                <div className={'text-muted text-right pt-1 pr-3 fs-d8e'}>{getPronunciationSystemString(system)}</div>
-                <table className={'table border-0 mb-0 word-break-a'}>
-                  <tbody>
-                  {locals.map((local, index) =>
-                    <tr key={index}>
-                      <td className={'align-middle text-muted'}>{getLocalString(local)}</td>
-                      <td>
-                        {sProns.filter(p => p.value.local === local).map(item =>
-                          <div key={item.keyid} className={'pos-r mb-1 pr-4'}>
-                            <div>
-                              <span className={'text-danger font-italic fs-1d3e'}>{item.value.transcript}</span>
-                              <span className={'text-muted fs-d8e ml-3'}>
-                              {getEWordClassString(item.value.word_class)}
-                              </span>
-                            </div>
-                            <i
-                              className={
-                                'fa text-muted cursor-p pos-a t-d65 r-0' + (this.state.isLoadingAudio ?
-                                  ' an-spin fa-spinner'
-                                  : ' fa-volume-up')}
-                              onClick={e => this.onClickSpeaker(
-                                e, word.value.word, getLocalString(local), item.value.sound_url)}
-                            />
-                          </div>
-                        )}
-                      </td>
-                    </tr>)}
-                  </tbody>
-                </table>
-              </div>;
-            })}
-          </div>
-        </div>
-      </div>
+      <Root isActive={isActive} onClick={onWordClick}>
+        {linkEdit}
+        <Title>
+          {word.value.word}
+        </Title>
+        <PronunciationTable>
+          <tbody>
+            {localTranscripts}
+          </tbody>
+        </PronunciationTable>
+        <Footer>
+          {meaning}{usage}
+        </Footer>
+      </Root>
     );
   }
 }

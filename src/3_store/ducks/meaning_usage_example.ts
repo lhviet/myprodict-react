@@ -3,7 +3,6 @@ import { DbLimitation, IMeaningExample } from 'myprodict-model/lib-esm';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs/internal/observable/of';
 import { AnyAction } from 'redux';
 
 import { HOST } from '^/app-configs';
@@ -43,7 +42,7 @@ const epicSearchExamplesOfUsage = (action$: ActionsObservable<AnyAction>) => act
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage_example.search), data, headerJson).pipe(
       map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, ajaxError)])
     );
   }),
 );
@@ -61,7 +60,7 @@ const epicSearchExamples = (action$: ActionsObservable<AnyAction>) => action$.pi
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage_example.search), data, headerJson).pipe(
       map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SEARCH_TERM, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_TERM, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_TERM, ajaxError)])
     );
   }),
 );
@@ -79,7 +78,7 @@ const epicDeleteExample = (action$: ActionsObservable<AnyAction>) => action$.pip
     headerAuth(readToken())
   ).pipe(
     map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__DELETE, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE_EXAMPLE__DELETE, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__DELETE, ajaxError)])
   )),
 );
 
@@ -96,7 +95,7 @@ const epicSaveExample = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     headerAuth(readToken())
   ).pipe(
     map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SAVE, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(MEANING_USAGE_EXAMPLE__SAVE, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SAVE, ajaxError)])
   )),
 );
 

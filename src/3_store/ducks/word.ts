@@ -1,7 +1,7 @@
 import { DbLimitation, IWord } from 'myprodict-model/lib-esm';
 import { AnyAction } from 'redux';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
-import { concat, of } from 'rxjs';
+import { concat } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, take, mapTo } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
 
@@ -29,6 +29,7 @@ export interface IWordState {
     models?: IWord[],
     total?: number
   };
+  readAloudWords: IWord[];
 }
 
 export const WORD_STATE_INIT: IWordState = {
@@ -41,6 +42,7 @@ export const WORD_STATE_INIT: IWordState = {
   isSearching: false,
   currentWordKeyid: '',
   searchResult: {},
+  readAloudWords: [],
 };
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
@@ -69,8 +71,32 @@ const epicSearchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     HOST.api.getUrl(HOST.api.word.search),
     data,
     headerJson).pipe(
-    switchMap(({response}) => of(createActionDone(WORD__SEARCH, response.data))),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(WORD__SEARCH, ajaxError)))
+    switchMap(({response}) => [createActionDone(WORD__SEARCH, response.data)]),
+    catchError((ajaxError: AjaxError) => [createActionFailed(WORD__SEARCH, ajaxError)])
+  )),
+);
+
+/**
+ * action: search matching words
+ */
+export const WORD__SEARCH_MATCH = 'WORD__SEARCH_MATCH';
+export const actionSearchMatchWordStart = (words: Array<string>): AnyAction => {
+  const filters = {word: {in: words}};
+  const data = {
+    filters,
+    limitation: new DbLimitation(0, 100),
+  };
+  return createActionStart(WORD__SEARCH_MATCH, data);
+};
+const epicSearchMatchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
+  ofType(`${WORD__SEARCH_MATCH}_START`),
+  switchMap(({data}) => ajax.post(
+    HOST.api.getUrl(HOST.api.word.search),
+    data,
+    headerJson,
+  ).pipe(
+    switchMap(({response}) => [createActionDone(WORD__SEARCH_MATCH, response.data)]),
+    catchError((ajaxError: AjaxError) => [createActionFailed(WORD__SEARCH_MATCH, ajaxError)])
   )),
 );
 
@@ -89,7 +115,7 @@ const epicFetchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     data,
     headerJson).pipe(
     map(({response}) => createActionDone(WORD__DETAIL_FETCH, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(WORD__DETAIL_FETCH, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(WORD__DETAIL_FETCH, ajaxError)])
   )),
 );
 
@@ -130,7 +156,7 @@ const epicCheckWordExisting = (action$: ActionsObservable<AnyAction>) => action$
     const apiUrl =  HOST.api.getUrl(HOST.api.word.is_existing) + data.url;
     return ajax.get(apiUrl).pipe(
       map(({response}) => createActionDone(WORD__CHECK_WORD_EXISTING, response)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(WORD__CHECK_WORD_EXISTING, ajaxError))),
+      catchError((ajaxError: AjaxError) => [createActionFailed(WORD__CHECK_WORD_EXISTING, ajaxError)]),
     );
   }),
 );
@@ -146,7 +172,7 @@ const epicCheckWordUrlExisting = (action$: ActionsObservable<AnyAction>) => acti
     const apiUrl =  HOST.api.getUrl(HOST.api.word.is_url_existing) + data.url;
     return ajax.get(apiUrl).pipe(
       map(({response}) => createActionDone(WORD__CHECK_URL_EXISTING, response)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(WORD__CHECK_URL_EXISTING, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(WORD__CHECK_URL_EXISTING, ajaxError)])
     );
   }),
 );
@@ -161,7 +187,7 @@ const epicSaveWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.word.save), data, headerAuth(readToken())).pipe(
       map(({response}) => createActionDone(WORD__SAVE, response.data)),
-      catchError((ajaxError: AjaxError) => of(createActionFailed(WORD__SAVE, ajaxError)))
+      catchError((ajaxError: AjaxError) => [createActionFailed(WORD__SAVE, ajaxError)])
     );
   }),
 );
@@ -170,6 +196,7 @@ const epicSaveWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
 
 export const epics = combineEpics(
   epicSearchWord,
+  epicSearchMatchWord,
   epicFetchWord,
   epicFetchWordOxford,
   epicCheckWordExisting,
@@ -203,6 +230,13 @@ export default (state = WORD_STATE_INIT, action: any): IWordState => {
     case `${WORD__SEARCH}_DONE`:
       return {...state, searchResult: action.data, isSearching: false};
     case `${WORD__SEARCH}_FAILED`:
+      return {...state, isSearching: false};
+
+    case `${WORD__SEARCH_MATCH}_START`:
+      return {...state, isSearching: true};
+    case `${WORD__SEARCH_MATCH}_DONE`:
+      return {...state, readAloudWords: action.data.models, isSearching: false};
+    case `${WORD__SEARCH_MATCH}_FAILED`:
       return {...state, isSearching: false};
 
     case `${WORD__CHECK_WORD_EXISTING}_START`:

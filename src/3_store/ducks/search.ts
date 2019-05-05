@@ -1,7 +1,6 @@
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
-import { of } from 'rxjs/internal/observable/of';
 import { AnyAction } from 'redux';
 
 import { HOST } from '^/app-configs';
@@ -50,7 +49,7 @@ const epicSearchWordHasPronunciation = (action$: ActionsObservable<AnyAction>) =
     data,
     headerJson).pipe(
     map(({response}) => createActionDone(SEARCH__WORD_HAS_PRON, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(SEARCH__WORD_HAS_PRON, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(SEARCH__WORD_HAS_PRON, ajaxError)])
   )),
 );
 
@@ -66,7 +65,7 @@ const epicSearchWordHasNoPronunciation = (action$: ActionsObservable<AnyAction>)
     data,
     headerJson).pipe(
     map(({response}) => createActionDone(SEARCH__WORD_HAS_NO_PRON, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(SEARCH__WORD_HAS_NO_PRON, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(SEARCH__WORD_HAS_NO_PRON, ajaxError)])
   )),
 );
 
@@ -82,7 +81,7 @@ const epicSearchWordHasNoMeanUsage = (action$: ActionsObservable<AnyAction>) => 
     data,
     headerJson).pipe(
     map(({response}) => createActionDone(SEARCH__WORD_HAS_NO_MEAN_USAGE, response.data)),
-    catchError((ajaxError: AjaxError) => of(createActionFailed(SEARCH__WORD_HAS_NO_MEAN_USAGE, ajaxError)))
+    catchError((ajaxError: AjaxError) => [createActionFailed(SEARCH__WORD_HAS_NO_MEAN_USAGE, ajaxError)])
   )),
 );
 

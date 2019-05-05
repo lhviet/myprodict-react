@@ -6,7 +6,6 @@ import { actionSearchMeansOfWord } from '../ducks/meaning';
 import { actionSearchUsagesOfWord } from '../ducks/meaning_usage';
 import { actionSearchPronOfWord } from '../ducks/pronunciation';
 import { actionSearchExamples } from '../ducks/meaning_usage_example';
-import { of } from 'rxjs/internal/observable/of';
 import { from } from 'rxjs/internal/observable/from';
 
 export const epicFetchWordData = (action$: ActionsObservable<AnyAction>) => action$.pipe(
@@ -30,6 +29,6 @@ export const epicFetchWordData = (action$: ActionsObservable<AnyAction>) => acti
         ]) :
         from(actions);
     }
-    return of({type: 'done'});
+    return [{type: 'done'}];
   })
 );
