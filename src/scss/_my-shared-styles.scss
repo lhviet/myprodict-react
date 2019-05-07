@@ -10,12 +10,12 @@
 }
 
 .a-bright {
-  color: $gray-400 !important;
+  color: #EFEFEF !important;
   text-decoration: none !important;
 
   &.active,
   &:hover {
-    color: white !important;
-    border-bottom: solid 1px white;
+    color: #fdff9c !important;
+    border-bottom: solid 1px #fdff9c;
   }
 }

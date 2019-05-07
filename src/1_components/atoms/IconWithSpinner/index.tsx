@@ -9,7 +9,7 @@ const Root = styled.i`
   border: solid 1px transparent;
   border-radius: 50%;
   color: ${colors.grey.alpha(.8).toString()};
-  transition: ease .1s;
+  transition: ease .3s;
   
   :hover {
     border-color: ${colors.grey.alpha(.8).toString()};

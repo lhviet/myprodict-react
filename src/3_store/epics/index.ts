@@ -3,7 +3,7 @@ import { epicFetchWordData } from './word';
 import { epicFetchPronsOfCurrentWord } from './pron';
 import { epicFetchUsagesOfCurrentWord } from './m_usage';
 import { epicFetchMeansOfCurrentWord, epicSetCurrentWordWithUsages } from './meaning';
-import { epicFetchExamplesOfUsage, epicFetchExamplesOfUsages } from './m_example';
+import { epicFetchExamplesOfUsage, epicFetchExamplesOfUsages, epicFetchExamplesOfCurrentWord } from './m_example';
 import { epics as wordEpics } from '../ducks/word';
 import { epics as userEpics } from '../ducks/user';
 import { epics as searchEpics } from '../ducks/search';
@@ -27,4 +27,5 @@ export const rootEpic = combineEpics(
   epicFetchUsagesOfCurrentWord,
   epicFetchExamplesOfUsage,
   epicFetchExamplesOfUsages,
+  epicFetchExamplesOfCurrentWord,
 );

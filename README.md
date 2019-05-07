@@ -31,5 +31,9 @@ Any component which requires logic & data will be located in `containers`.
 
 2. Containers  
 Components in `containers` including both UI & its logic  
-- `atoms`, `molecules`, and `organisms` are same with `components`
 - `pages` contains pages in routes
+- `components` contains components
+
+The relationship between `Components` and `Containers` is Uni-direction.  
+- `Containers` --self-refs--> `Containers`.
+- `Containers` -------refs--> `Components`.

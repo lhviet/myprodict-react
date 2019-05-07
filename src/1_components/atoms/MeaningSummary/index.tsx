@@ -13,7 +13,7 @@ const Root = styled.div`
   border: 1px solid ${colors.borderGray.alpha(.5).toString()};
   border-radius: 3px;
   background-clip: border-box;
-  background-color: white;
+  background-color: #fff;
 `;
 const Title = styled.div`
   padding: .6rem .5rem;

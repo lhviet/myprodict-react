@@ -6,50 +6,80 @@ import axios from 'axios';
 import moment from 'moment';
 import WaveSurfer from 'wavesurfer.js';
 import * as Diff from 'diff';
-import { IWord } from 'myprodict-model/lib-esm';
 import styled from 'styled-components';
 
 import { IStoreState } from '^/types';
 import { HOST } from '^/app-configs';
+import { colors, styles } from '^/theme';
 
-import Word from '^/1_components/atoms/Word';
-import { IWordState, actionSearchMatchWordStart } from '^/3_store/ducks/word';
+import RecordingBtn from '^/1_components/atoms/RecordingBtn';
+import ListSearchWord from '^/2_containers/components/ListSearchWord';
+import { actionSearchWord, IWordState } from '^/3_store/ducks/word';
+
 import PageLayout from '../_PageLayout';
-
-import { colors } from '^/theme';
 
 const Root = styled.div`
   position: relative;
-  width: 80%;
-  max-width: 800px;
-  min-width: 300px;
-  margin: 0 auto;
-  padding: 1rem .5rem;
+  height: calc(100vh - 3rem);
+  overflow: hidden;
+`;
+const Left = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  max-width: 300px;
+  background-color: #fff;
+  border-right: solid 1px ${colors.borderGray.toString()};
+`;
+const Right = styled.div`
+  margin-left: 30%;
+  height: 100%;
+  padding: 1rem;
+  
+  transition: all ease .1s;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  ${styles.scrollbar};
 `;
 const TextArea = styled.textarea.attrs({
   placeholder: 'Paste or type the sentences you want to practice here.',
-  rows: 4,
+  rows: 6,
 })`
   width: 100%;
+  font-size: 1.5rem;
+`;
+const Title = styled.label`
+  font-weight: 600;
+  color: ${colors.dark.alpha(.8).toString()};
+`;
+const RecognitionWrapper = styled.div`
+  position: relative;
+  background-color: #fff;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: .5rem;
 `;
 const WaveSurferTableWrapper = styled.table`
-  position: relative;
-  background-color: white;
   border: none;
   width: 100%;
 `;
+
 const WaveSurferControlCol = styled.td`
-  width: 20%;
+  width: 1.5rem;
+  text-align: right;
 `;
 const WaveSurferContainer = styled.td`
-  width: 80%;
+  width: auto;
 `;
 const RecognitionTextWrapper = styled.div`
-  background-color: white;
+  color: ${colors.dark.alpha(.9).toString()};
 `;
 const DiffTextWrapper = styled.div`
-  background-color: white;
+  background-color: #fff;
   font-size: 1.1rem;
+  padding: .5rem;
 `;
 const DiffTextCorrect = styled.span`
   color: ${colors.blue.toString()};
@@ -62,27 +92,28 @@ const DiffTextAdded = styled.span`
   text-decoration: line-through;
   margin-left: .2rem;
 `;
-const MicBtn = styled.i`
-  font-size: 2rem;
-  width: 2.4rem;
-  height: 2.4rem;
-  text-align: center;    
+const PlayBtn = styled.i.attrs({
+  title: 'Play/Pause'
+})`
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.1rem;
-  border: solid 1px transparent;
-  border-radius: 50%;
   color: ${colors.grey.alpha(.8).toString()};
+  
+  :hover {
+    color: ${colors.green.toString()};
+  }
 `;
-const PlayBtn = styled.i`
-  font-size: 1rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  text-align: center;    
-  cursor: pointer;
-  padding: 0.1rem;
-  border: solid 1px transparent;
-  border-radius: 50%;
-  color: ${colors.grey.alpha(.8).toString()};
+const DownloadBtn = styled(PlayBtn).attrs({
+  title: 'Download'
+})`
+  position: absolute;
+  top: .5rem;
+  right: .6rem;
+  font-size: 1.1rem;
+  color: ${colors.grey.alpha(.6).toString()};
+  :hover {
+    color: ${colors.grey.toString()};
+  }
 `;
 
 interface Props {
@@ -90,7 +121,6 @@ interface Props {
   searchWord(words: Array<string>): any;
 }
 interface State {
-  isSpeechAvailable: boolean;
   isRecording: boolean;
   isMicAvailable: boolean;
   isPlaying: boolean;
@@ -104,18 +134,16 @@ class PageReadAloud extends React.Component<Props, State> {
   audioBlob: Blob | undefined;
   speechRecognition: SpeechRecognition | undefined;
 
-  wavesurferRef: RefObject<HTMLTableCellElement>;
-  wavesurfer: WaveSurfer | undefined;
+  waveSurferRef: RefObject<HTMLTableCellElement>;
+  waveSurfer: WaveSurfer | undefined;
 
   constructor(props: Props, context: any) {
     super(props, context);
-    this.wavesurferRef = React.createRef();
+    this.waveSurferRef = React.createRef();
 
-    let isSpeechAvailable: boolean = true;
+    const isSpeechAvailable: boolean = 'webkitSpeechRecognition' in window;
 
-    if (!('webkitSpeechRecognition' in window)) {
-      isSpeechAvailable = false;
-    } else {
+    if (isSpeechAvailable) {
       this.speechRecognition = new webkitSpeechRecognition() as SpeechRecognition;
       this.speechRecognition.continuous = true;
       this.speechRecognition.interimResults = false;
@@ -137,29 +165,12 @@ class PageReadAloud extends React.Component<Props, State> {
         this.props.searchWord(missingWords);
         this.setState({ recognitionText: finalTranscript, diffWords });
       };
+    } else {
+      console.error('SpeechRecognition is not available on this browser.');
     }
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then((stream) => {
-        this.mediaRecorder = new MediaRecorder(stream);
-        this.mediaRecorder.ondataavailable = (event: BlobEvent) => this.audioChunks.push(event.data);
-        this.mediaRecorder.onstart = () => {
-          this.audioChunks = [];
-          this.setState({ isRecording: true });
-        };
-        this.mediaRecorder.onstop = () => {
-          this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
-          if (this.wavesurfer) {
-            this.wavesurfer.load(URL.createObjectURL(this.audioBlob));
-          }
-          this.setState({ isRecording: false });
-        };
-
-        this.setState({ isMicAvailable: true });
-      });
 
     this.state = {
-      isSpeechAvailable,
-      isMicAvailable: false,
+      isMicAvailable: true,
       isRecording: false,
       isPlaying: false,
       sampleText: '',
@@ -169,8 +180,8 @@ class PageReadAloud extends React.Component<Props, State> {
   }
 
   componentDidMount(): void {
-    this.wavesurfer = WaveSurfer.create({
-      container: this.wavesurferRef.current as HTMLTableCellElement,
+    this.waveSurfer = WaveSurfer.create({
+      container: this.waveSurferRef.current as HTMLTableCellElement,
       waveColor: 'gray',
       progressColor: 'black',
       cursorColor: 'black',
@@ -178,29 +189,51 @@ class PageReadAloud extends React.Component<Props, State> {
       height: 60,
       hideScrollbar: true,
     });
-    this.wavesurfer.on('finish', () => {
-      if (this.wavesurfer) {
-        this.wavesurfer.stop();
+    this.waveSurfer.on('finish', () => {
+      if (this.waveSurfer) {
+        this.waveSurfer.stop();
       }
       this.setState({ isPlaying: false });
     });
   }
 
-  onStartRecording = () => {
+  startRecording = () => {
     if (!this.state.isRecording) {
-      if (this.mediaRecorder) {
-        this.mediaRecorder.start();
-      }
+      navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          this.mediaRecorder = new MediaRecorder(stream);
+          this.mediaRecorder.ondataavailable = (event: BlobEvent) => this.audioChunks.push(event.data);
+          this.mediaRecorder.onstart = () => {
+            this.audioChunks = [];
+            this.setState({isRecording: true});
+          };
+          this.mediaRecorder.onstop = () => {
+            this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
+            if (this.waveSurfer) {
+              this.waveSurfer.load(URL.createObjectURL(this.audioBlob));
+            }
+            this.setState({isRecording: false});
+          };
+          this.mediaRecorder.start();
+
+          this.setState({isMicAvailable: true});
+        })
+        .catch(err => {
+          console.error('Microphone is not available.');
+          this.setState({isMicAvailable: false});
+        });
+
       if (this.speechRecognition) {
         this.speechRecognition.start();
       }
       this.setState({ isRecording: true });
     }
   }
-  onStopRecording = () => {
+  stopRecording = () => {
     if (this.state.isRecording) {
       if (this.mediaRecorder) {
         this.mediaRecorder.stop();
+        this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
       }
       if (this.speechRecognition) {
         this.speechRecognition.stop();
@@ -214,27 +247,17 @@ class PageReadAloud extends React.Component<Props, State> {
   }
 
   playPauseWaveSurfer = () => {
-    if (this.wavesurfer) {
-      this.wavesurfer.playPause();
+    if (this.waveSurfer) {
+      this.waveSurfer.playPause();
       this.setState((prevState) => ({ isPlaying: !prevState.isPlaying }));
     }
   }
 
   render() {
     const {
-      isMicAvailable, isSpeechAvailable, isRecording, isPlaying, sampleText, recognitionText, diffWords,
+      isMicAvailable, isRecording, isPlaying, sampleText, recognitionText, diffWords,
     }: State = this.state;
-    const playAudio = () => {
-      if (this.audioBlob) {
-        const audioUrl: string = URL.createObjectURL(this.audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play().then(() => console.log('Play recorded audio now ~~~'));
 
-        const bodyFormData = new FormData();
-        bodyFormData.set('data', this.audioBlob);
-        axios.post(HOST.api.getUrl('/api/speech'), bodyFormData);
-      }
-    };
     const downloadAudio = () => {
       if (this.audioBlob) {
         const timestamp: string = moment().format('HHmm-DDMMYYYY');
@@ -247,19 +270,15 @@ class PageReadAloud extends React.Component<Props, State> {
       }
     };
 
-    const microphoneIcon: ReactNode = isSpeechAvailable ? (
-      isRecording ? (
-        <MicBtn className={'fa fa-microphone an-pulse-btn'} onClick={this.onStopRecording} />
-      ) : (
-        <MicBtn className={'fa fa-microphone'} onClick={this.onStartRecording} />
-      )
-    ) : (
-      <MicBtn className={'fa fa-microphone-slash'} />
-    );
+    const onRecording = () => {
+      if (isRecording) {
+        this.stopRecording();
+      } else if (isMicAvailable) {
+        this.startRecording();
+      }
+    }
 
     const waveIconClassName: string = `fa ${isPlaying ? 'fa-pause' : 'fa-play'}`;
-
-    const words: IWord[] = this.props.word.readAloudWords || [];
 
     const speechResult: ReactNode = diffWords.map(({ value, added, removed }, index) => {
       return added ? (
@@ -274,50 +293,42 @@ class PageReadAloud extends React.Component<Props, State> {
     return (
       <PageLayout>
         <Root>
-          <TextArea onChange={this.handleTextChange}>{sampleText}</TextArea>
+          <Left>
+            <ListSearchWord />
+          </Left>
+          <Right>
+            <TextArea onChange={this.handleTextChange}>{sampleText}</TextArea>
 
-          <div>
-            <button className={'btn btn-primary'} onClick={playAudio}>Save</button>
-            <button className={'btn btn-primary'} onClick={downloadAudio}>Download</button>
-            {microphoneIcon}
-          </div>
+            <RecordingBtn
+              isRecording={isRecording}
+              isMicAvailable={isMicAvailable}
+              countdown={3}
+              onClick={onRecording}
+            />
 
-          <WaveSurferTableWrapper>
-            <tbody>
-              <tr>
-                <WaveSurferControlCol>
-                  <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
-                </WaveSurferControlCol>
-                <WaveSurferContainer ref={this.wavesurferRef} />
-              </tr>
-            </tbody>
-          </WaveSurferTableWrapper>
+            <RecognitionWrapper>
+              <Title>Your Speech:</Title>
+              <DownloadBtn className={'fa fa-cloud-download'} onClick={downloadAudio} />
+              <WaveSurferTableWrapper>
+                <tbody>
+                <tr>
+                  <WaveSurferContainer ref={this.waveSurferRef} />
+                  <WaveSurferControlCol>
+                    <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
+                  </WaveSurferControlCol>
+                </tr>
+                </tbody>
+              </WaveSurferTableWrapper>
+              <RecognitionTextWrapper>
+                {recognitionText}
+              </RecognitionTextWrapper>
+            </RecognitionWrapper>
 
-          <RecognitionTextWrapper>
-            <div><b>Your Speech:</b></div>
-            {recognitionText}
-          </RecognitionTextWrapper>
-
-          <DiffTextWrapper>
-            <div><b>Diff Text:</b></div>
-            {speechResult}
-          </DiffTextWrapper>
-
-          <hr />
-          <b>Incorrect words:</b>
-          {words.map((model: IWord) => {
-            return <div key={model.keyid} className={'mb-3 word'}>
-              <Word
-                word={model}
-                prons={[]}
-                isActive={false}
-                meaningNumber={0}
-                usageNumber={0}
-                onSelectWord={() => console.log('onSelectWord')}
-                link={`/word/${model.value.custom_url}`}
-              />
-            </div>;
-          })}
+            <DiffTextWrapper>
+              <Title>Result:</Title>
+              {speechResult}
+            </DiffTextWrapper>
+          </Right>
         </Root>
       </PageLayout>
     );
@@ -330,7 +341,7 @@ const mapStateToProps = (state: IStoreState) => ({
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   searchWord(words: Array<string>) {
-    dispatch(actionSearchMatchWordStart(words));
+    dispatch(actionSearchWord(words));
   }
 });
 

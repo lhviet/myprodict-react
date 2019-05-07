@@ -1,4 +1,4 @@
-import React  from 'react';
+import React, { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { isAdminOrSuperAdmin, MPTypes } from 'myprodict-model/lib-esm';
 import styled from 'styled-components';
@@ -8,21 +8,30 @@ import { colors } from '^/theme';
 const LOGO_URL = 'http://d30qxb56opqku1.cloudfront.net/images/logo.png';
 
 const Root = styled.nav`
+  position: relative;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   height: 2rem;
   padding: .5rem .8rem;
-  background-color: ${colors.bgDark.toString()};  
-`;
-const NavBrandLink = styled.a`
-  line-height: 0;
+  background-color: ${colors.bgBlue.toString()};  
 `;
 const NavBrandIcon = styled.img.attrs({
   alt: 'logo',
   src: LOGO_URL,
 })`
+  position: absolute;
+  left: .5rem;
   width: 2rem;
   height: 2rem;
+`;
+const NavMenu = styled(NavLink)`
+  margin-right: 1rem;
+  font-size: 1.1rem;
+  line-height: 2;
+  
+  i {
+    font-size: 2rem;
+  }
 `;
 
 interface NavBarTopProps {
@@ -34,28 +43,29 @@ interface NavBarTopProps {
 const NavBarTop: React.FunctionComponent<NavBarTopProps> = (
   { isLoggedIn, userRole, className }: NavBarTopProps
 ) => {
+  const adminMenus: ReactNode = isLoggedIn && isAdminOrSuperAdmin(userRole) ? (
+    <>
+      <NavMenu to="/word/add" className={'a-bright ml-3'} activeClassName={'active'}>
+        <i className={'fa fa-plus-circle'} />
+      </NavMenu>
+      <NavMenu to="/word/admin" className={'a-bright ml-3'} activeClassName={'active'}>
+        <i className={'fa fa-list-ul'} />
+      </NavMenu>
+    </>
+  ) : undefined;
+
   return (
     <Root className={className}>
-      <NavBrandLink href="/">
+      <NavLink to="/" exact={true}>
         <NavBrandIcon />
-      </NavBrandLink>
-      <NavLink to="/read-aloud" className={'a-bright'} activeClassName={'active'} exact={true}>
+      </NavLink>
+      <NavMenu to="/read-aloud" className={'a-bright'} activeClassName={'active'} exact={true}>
         Read Aloud
-      </NavLink>
-      <NavLink to="/app" className={'a-bright'} activeClassName={'active'} exact={true}>
-        App
-      </NavLink>
-      <NavLink to="/" className={'a-bright'} activeClassName={'active'} exact={true}>
-        <i className={'fa fa-home fa-2x'} />
-      </NavLink>
-      {isLoggedIn && isAdminOrSuperAdmin(userRole) && <div>
-        <NavLink to="/word/add" className={'a-bright ml-3'} activeClassName={'active'}>
-          <i className={'fa fa-plus-circle fa-2x text-warning'} />
-        </NavLink>
-        <NavLink to="/word/admin" className={'a-bright ml-3'} activeClassName={'active'}>
-          <i className={'fa fa-list-ul fa-2x text-warning'} />
-        </NavLink>
-      </div>}
+      </NavMenu>
+      <NavMenu to="/" className={'a-bright'} activeClassName={'active'} exact={true}>
+        <i className={'fa fa-home'} />
+      </NavMenu>
+      {adminMenus}
     </Root>
   );
 };

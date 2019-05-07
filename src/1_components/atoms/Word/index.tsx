@@ -57,7 +57,7 @@ const PronunciationTableRow = styled.tr`
   }
 `;
 const PronunciationTableLocal = styled.td`
-  width: 2rem;
+  width: 1.7rem;
   font-size: .9rem;
   color: ${colors.grey.alpha(.8).toString()};
   padding-top: .25rem;
@@ -71,9 +71,10 @@ const Transcript = styled.div`
   color: ${colors.red.toString()};
 `;
 const TranscriptWordClass = styled.span`
-  margin-left: 7px;
   font-size: .8rem;
   font-style: italic;
+  width: 1.5rem;
+  display: inline-block;
   color: ${colors.grey.alpha(.8).toString()};
 `;
 const Speaker = styled(IconWithSpinner)`
@@ -89,7 +90,7 @@ const Footer = styled.div`
   margin-top: .2rem;
 `;
 
-interface WordProps {
+interface Props {
   word: IWord;
   prons: Array<IPronunciation>;
   isActive?: boolean;
@@ -100,14 +101,14 @@ interface WordProps {
   onSelectWord?(keyid: string, term: string): any;
 }
 
-interface WordState {
+interface State {
   loadingAudio?: string;
   pSystems: Array<MPTypes.PronunciationSystem>;
   selectedSystem: MPTypes.PronunciationSystem;
 }
 
-class Word extends React.Component<WordProps, WordState> {
-  constructor(props: WordProps, context: any) {
+class Word extends React.Component<Props, State> {
+  constructor(props: Props, context: any) {
     super(props, context);
     this.state = {
       loadingAudio: undefined,
@@ -120,7 +121,7 @@ class Word extends React.Component<WordProps, WordState> {
     this.setupPSystems(this.props.prons);
   }
 
-  componentWillReceiveProps(nextProps: WordProps) {
+  componentWillReceiveProps(nextProps: Props) {
     this.setupPSystems(nextProps.prons);
   }
 
@@ -182,10 +183,10 @@ class Word extends React.Component<WordProps, WordState> {
 
           return (
             <Transcript key={transcript.keyid}>
-              {transcript.value.transcript}
               <TranscriptWordClass>
                 {getEWordClassString(transcript.value.word_class)}
               </TranscriptWordClass>
+              {transcript.value.transcript}
               <Speaker iconType={IconType.speaker} isLoading={isLoading} onClick={onAudioClick} />
             </Transcript>
           );

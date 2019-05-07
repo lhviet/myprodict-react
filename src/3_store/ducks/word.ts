@@ -29,7 +29,6 @@ export interface IWordState {
     models?: IWord[],
     total?: number
   };
-  readAloudWords: IWord[];
 }
 
 export const WORD_STATE_INIT: IWordState = {
@@ -42,28 +41,44 @@ export const WORD_STATE_INIT: IWordState = {
   isSearching: false,
   currentWordKeyid: '',
   searchResult: {},
-  readAloudWords: [],
 };
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
 export const WORD__SET_CURRENT = 'WORD__SET_CURRENT';
-export const actionSetCurrentWordId = (wordId: string): AnyAction => ({ type: WORD__SET_CURRENT, data: wordId });
+export const actionSetCurrentWordId = (wordId: string): AnyAction => ({
+  type: WORD__SET_CURRENT, data: wordId,
+});
 
 /**
  * action: searching words
  */
 export const WORD__SEARCH = 'WORD__SEARCH';
-export const actionSearchWordStart = (keyword: string, offset: number, limit: number): AnyAction => {
-  const filters = {word: ''};
-  if (keyword && keyword.trim().length > 0) {
-    filters.word = keyword + '%';
+export const actionSearchWord = (
+  keyword: string | Array<string>,
+  offset = 0,
+  limit = 30,
+): AnyAction => {
+  if (typeof keyword === 'string') {
+    let filters = {};
+    if (keyword && keyword.trim().length > 0) {
+      filters = {
+        word: keyword + '%'
+      };
+    }
+    const data = {
+      filters,
+      limitation: new DbLimitation(offset, limit, 'word'),
+    };
+    return createActionStart(WORD__SEARCH, data);
+  } else {
+    const filters = {word: {in: keyword}};
+    const data = {
+      filters,
+      limitation: new DbLimitation(offset, limit),
+    };
+    return createActionStart(WORD__SEARCH, data);
   }
-  const data = {
-    filters,
-    limitation: new DbLimitation(offset, limit, keyword ? 'word' : ''),
-  };
-  return createActionStart(WORD__SEARCH, data);
 };
 const epicSearchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${WORD__SEARCH}_START`),
@@ -73,30 +88,6 @@ const epicSearchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     headerJson).pipe(
     switchMap(({response}) => [createActionDone(WORD__SEARCH, response.data)]),
     catchError((ajaxError: AjaxError) => [createActionFailed(WORD__SEARCH, ajaxError)])
-  )),
-);
-
-/**
- * action: search matching words
- */
-export const WORD__SEARCH_MATCH = 'WORD__SEARCH_MATCH';
-export const actionSearchMatchWordStart = (words: Array<string>): AnyAction => {
-  const filters = {word: {in: words}};
-  const data = {
-    filters,
-    limitation: new DbLimitation(0, 100),
-  };
-  return createActionStart(WORD__SEARCH_MATCH, data);
-};
-const epicSearchMatchWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
-  ofType(`${WORD__SEARCH_MATCH}_START`),
-  switchMap(({data}) => ajax.post(
-    HOST.api.getUrl(HOST.api.word.search),
-    data,
-    headerJson,
-  ).pipe(
-    switchMap(({response}) => [createActionDone(WORD__SEARCH_MATCH, response.data)]),
-    catchError((ajaxError: AjaxError) => [createActionFailed(WORD__SEARCH_MATCH, ajaxError)])
   )),
 );
 
@@ -196,7 +187,6 @@ const epicSaveWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
 
 export const epics = combineEpics(
   epicSearchWord,
-  epicSearchMatchWord,
   epicFetchWord,
   epicFetchWordOxford,
   epicCheckWordExisting,
@@ -230,13 +220,6 @@ export default (state = WORD_STATE_INIT, action: any): IWordState => {
     case `${WORD__SEARCH}_DONE`:
       return {...state, searchResult: action.data, isSearching: false};
     case `${WORD__SEARCH}_FAILED`:
-      return {...state, isSearching: false};
-
-    case `${WORD__SEARCH_MATCH}_START`:
-      return {...state, isSearching: true};
-    case `${WORD__SEARCH_MATCH}_DONE`:
-      return {...state, readAloudWords: action.data.models, isSearching: false};
-    case `${WORD__SEARCH_MATCH}_FAILED`:
       return {...state, isSearching: false};
 
     case `${WORD__CHECK_WORD_EXISTING}_START`:

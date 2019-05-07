@@ -2,7 +2,7 @@ import * as React from 'react';
 import styled from 'styled-components';
 
 import { colors } from '^/theme';
-import IconWithSpinner, {IconType} from '^/1_components/atoms/IconWithSpinner';
+import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
 const Root = styled.div`
   position: relative;
@@ -14,13 +14,13 @@ const SearchInput = styled.input.attrs({
   'aria-label': 'search keywords',
 })`
   display: block;
-  width: calc(100% - 1rem);
-  padding: .5rem;
+  width: calc(100% - 2.8rem);
+  padding: .5rem 2.3rem .5rem .5rem;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: ${colors.blue.toString()};
-  background-color: white;
+  color: ${colors.blueDark.toString()};
+  background-color: #fff;
   background-clip: padding-box;
   border: none;
   border-bottom: solid 2px ${colors.grey.alpha(.5).toString()};
@@ -35,8 +35,12 @@ const SearchIcon = styled(IconWithSpinner)`
   right: 0.5rem;
   top: 0.5rem;
   font-size: 1.3rem;
-  color: ${colors.blue.alpha(.8).toString()};
+  color: ${colors.blueDark.alpha(.6).toString()};
   cursor: pointer;
+  
+  :hover {
+    color: ${colors.blueDark.alpha(.8).toString()};
+  }
 `;
 
 interface Props {
@@ -69,7 +73,7 @@ class SearchInputField extends React.Component<Props, SearchInputFieldState> {
   setFocus = (isFocusing: boolean) => this.setState({isFocusing});
 
   render() {
-    const { isSearching, className, onChange }: Props = this.props;
+    const { isSearching, className }: Props = this.props;
 
     return (
       <Root className={className}>
