@@ -29,8 +29,8 @@ const Icon = styled.i`
   padding: 0.3rem;
 `;
 
-const intervalPeriod = 1000; // milliseconds
-const numbers$ = interval(intervalPeriod);
+// tslint:disable-next-line:no-magic-numbers
+const numbers$ = interval(1000);
 const cancel$ = new Subject();
 cancel$.pipe(takeUntil(cancel$));
 
