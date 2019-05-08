@@ -55,6 +55,7 @@ rules:
   no-duplicate-variable: true
   no-empty: true
   no-eval: true
+  no-magic-numbers: [true, -1, 0, 1]
   no-shadowed-variable: true
   no-string-literal: true
   no-switch-case-fall-through: true

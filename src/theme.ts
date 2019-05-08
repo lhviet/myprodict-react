@@ -12,6 +12,10 @@ export const colors = {
   blue: new Color('rgb(82, 145, 248)'),
   blueDark: new Color('rgb(54,78,148)'),
   green: new Color('rgb(104, 153, 80)'),
+
+  primaryBtn: new Color('#007aee'),
+  primaryBtnHover: new Color('#0066c9'),
+  primaryBtnBorder: new Color('#5597e3'),
 };
 
 export const zIndex = {
@@ -38,7 +42,7 @@ export const styles = {
   primaryBtn: `
     cursor: pointer;
     color: #fff;
-    background-color: #007bff;
+    background-color: ${colors.primaryBtn.toString()};
     display: inline-block;
     font-size: 1rem;
     font-weight: 400;
@@ -57,8 +61,8 @@ export const styles = {
       box-shadow .15s ease-in-out;
     
     :hover {
-      background-color: #0069d9;
-      border-color: #0062cc;
+      background-color: ${colors.primaryBtnHover.toString()};
+      border-color: ${colors.primaryBtnBorder.toString()};
     }
   `,
 };
