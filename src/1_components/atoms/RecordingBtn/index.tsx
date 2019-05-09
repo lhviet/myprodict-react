@@ -4,19 +4,29 @@ import { interval, Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
 import * as _ from 'lodash-es';
 
-import { styles } from '^/theme';
+import { colors, styles } from '^/theme';
 
-interface ButtonProps {
-  isCountingDown: boolean;
+interface RootProps {
+  isRecording?: boolean;
 }
-const Root = styled.button<ButtonProps>`
-  ${styles.primaryBtn};
+const Root = styled.button<RootProps>`
+  ${styles.primaryOutlineBtn};
   position: relative;
-  width: 5.6rem;
+  width: 6.6rem;
   font-size: 1.1rem;
   line-height: 1.2;
   padding: .45rem .35rem .375rem .75rem;
   text-align: left;
+  
+  border-color: ${({ isRecording }) => isRecording && colors.grey.alpha(.5).toString()};
+  color: ${({ isRecording }) => isRecording && colors.grey.alpha(.7).toString()};
+  
+  i {
+    color: ${({ isRecording }) => isRecording && '#fff'};
+  }
+  :hover {
+    color: ${({ isRecording }) => isRecording && colors.red.toString()};
+  }
 `;
 const Icon = styled.i`
   position: absolute;
@@ -29,6 +39,7 @@ const Icon = styled.i`
   padding: 0.3rem;
 `;
 
+const defaultCountdown = 3;
 // tslint:disable-next-line:no-magic-numbers
 const numbers$ = interval(1000);
 const cancel$ = new Subject();
@@ -49,14 +60,15 @@ interface Props {
   isRecording?: boolean;
   countdown?: number;
   className?: string;
-  onClick(): void;
+  onClick(isCountingdown?: boolean): void;
 }
 export default ({ isMicAvailable, isRecording, countdown, className, onClick }: Props) => {
   const [currentCountdown, setCountdown] = useState(-1);
 
+  let theCountdown = countdown || defaultCountdown;
   let recordingLabel: string = isMicAvailable ? MicStatus.Start : MicStatus.NoMic;
-  if (countdown && currentCountdown > 0) {
-    recordingLabel = makeReadyLabel(countdown, currentCountdown);
+  if (theCountdown && currentCountdown > 0) {
+    recordingLabel = makeReadyLabel(theCountdown, currentCountdown);
   } else if (isRecording) {
     recordingLabel = MicStatus.Stop;
   }
@@ -66,24 +78,26 @@ export default ({ isMicAvailable, isRecording, countdown, className, onClick }: 
   const iconClassName = `fa ${iconRecordingClassName} ${className}`;
 
   const handleButtonClick = () => {
+    onClick(!!theCountdown);
     if (isRecording) {
       onClick();
       return;
     }
-    if (countdown) {
-      setCountdown(currentCountdown < 0 ? countdown : -1);
+    if (theCountdown) {
+      setCountdown(currentCountdown < 0 ? theCountdown : -1);
       if (currentCountdown > -1) {
         cancel$.next();
         return;
       }
-      const countdownFrom = countdown - 1;
+      const countdownFrom = theCountdown - 1;
       numbers$.pipe(
-        take(countdown),
+        take(theCountdown),
         takeUntil(cancel$),
       ).subscribe(x => {
         setCountdown(countdownFrom - x);
         if (x === countdownFrom) {
           onClick();
+          setCountdown(-1);
         }
       });
     } else {
@@ -92,7 +106,7 @@ export default ({ isMicAvailable, isRecording, countdown, className, onClick }: 
   };
 
   return (
-    <Root isCountingDown={false} onClick={handleButtonClick} >
+    <Root isRecording={isRecording} onClick={handleButtonClick} >
       {recordingLabel}
       <Icon className={iconClassName} />
     </Root>

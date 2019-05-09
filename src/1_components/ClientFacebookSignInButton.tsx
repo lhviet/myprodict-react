@@ -43,7 +43,7 @@ class ClientFacebookSignInButton
     };
     FB.Event.subscribe('xfbml.render', finishedRendering);
     FB.XFBML.parse();
-  }
+  };
 
   render() {
     return (

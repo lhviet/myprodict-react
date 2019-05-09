@@ -42,7 +42,7 @@ class ClientGoogleSignInButton extends React.Component<ClientGoogleSignInButtonP
     theme: 'dark',
     onsuccess: this.props.signinSuccess,
     onfailure: this.props.signinFailure
-  })
+  });
 
   render() {
     return <div style={{display: 'inline-block'}} id={GOOGLE_BUTTON_ID} />;

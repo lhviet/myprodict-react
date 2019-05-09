@@ -29,7 +29,7 @@ interface Props {
 }
 
 export default ({ iconType, isLoading, className, onClick }: Props) => {
-  const iconClassName = `fa ${isLoading ? 'an-spin fa-spinner' : iconType} ${className}`;
+  const iconClassName = `fa ${isLoading ? 'fa-spinner an-spin' : iconType} ${className}`;
 
   return (
     <Root className={iconClassName} onClick={onClick} />

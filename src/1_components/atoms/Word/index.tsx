@@ -129,7 +129,7 @@ class Word extends React.Component<Props, State> {
     if (prons && prons.length > 0) {
       this.setState({pSystems: _.uniq(prons.map(p => p.value.system))});
     }
-  }
+  };
 
   onClickSpeaker = (e: React.SyntheticEvent, word: string, local: string, transcript: IPronunciation) => {
     const url = transcript.value.sound_url ||
@@ -150,7 +150,7 @@ class Word extends React.Component<Props, State> {
       });
     this.setState({loadingAudio: transcript.keyid});
     e.stopPropagation();  // cancel its parent's onClick function
-  }
+  };
 
   render() {
     const { word, prons, isActive, meaningNumber, usageNumber, isEditable, onSelectWord, link } = this.props;

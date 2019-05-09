@@ -51,7 +51,6 @@ const Right = styled.div`
   height: 100%;
   padding: 1rem;
   
-  transition: all ease .1s;
   overflow-y: auto;
   overscroll-behavior: contain;
   ${styles.scrollbar};
@@ -123,11 +122,11 @@ class PageHome extends React.Component<Props, State> {
         this.setState({wordItems: words});
       }
     }
-  }
+  };
 
   onSearchChange = (keyword: string) => {
     this.subjectSearch$.next(keyword);
-  }
+  };
 
   render() {
     const { word, meaning, user, mUsage, mExample }: Props = this.props;

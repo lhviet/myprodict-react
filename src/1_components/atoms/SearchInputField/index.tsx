@@ -67,7 +67,7 @@ class SearchInputField extends React.Component<Props, SearchInputFieldState> {
   handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({value: e.currentTarget.value});
     this.props.onChange(e.currentTarget.value);
-  }
+  };
   handleSearch = () => this.props.onChange(this.state.value);
 
   setFocus = (isFocusing: boolean) => this.setState({isFocusing});

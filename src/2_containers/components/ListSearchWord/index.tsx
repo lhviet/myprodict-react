@@ -21,7 +21,6 @@ interface RootProps {
 }
 const Root = styled.div<RootProps>`
   height: 100%;  
-  transition: all ease .1s;
   overflow-y: auto;
   overscroll-behavior: contain;
   ${styles.scrollbar};

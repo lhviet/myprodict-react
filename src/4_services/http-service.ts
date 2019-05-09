@@ -1,2 +1,6 @@
 export const headerJson = {'Content-Type': 'application/json'};
-export const headerAuth = (token: string) => ({Authorization : `Bearer ${token}`});
+export function headerAuth(token: string) {
+  return {
+    Authorization : `Bearer ${token}`,
+  };
+}
