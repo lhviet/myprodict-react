@@ -3,29 +3,22 @@ import { DbLimitation, IMeaningExample } from 'myprodict-model/lib-esm';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 
 import { HOST } from '^/app-configs';
 
-import { ITermExample } from '^/3_store/interfaces';
-import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
+import { TermExample } from '^/types';
+import { makeDone, makeFailed, makeStart } from '^/4_services/action-service';
 import { headerAuth, headerJson } from '^/4_services/http-service';
 import { readToken } from '^/4_services/local-storage-service';
 
-export interface IMeaningExampleState {
+export interface MeaningExampleState {
   isDeleting: boolean;
   isSaving: boolean;
   isSearching: boolean;
   items: IMeaningExample[];
-  termExamples: ITermExample[];
+  termExamples: TermExample[];
 }
-export const MEANING_USAGE_EXAMPLE_STATE_INIT: IMeaningExampleState = {
-  isDeleting: false,
-  isSaving: false,
-  isSearching: false,
-  items: [],
-  termExamples: [],
-};
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
@@ -35,32 +28,33 @@ export const actionSearchExamplesOfUsage = (uKeyids: string[]): AnyAction => {
     limitation: new DbLimitation(),
     filters: { meaning_usage_keyid: {in: uKeyids} },
   };
-  return createActionStart(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, data);
+  return makeStart(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, data);
 };
 const epicSearchExamplesOfUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES}_START`),
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage_example.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, ajaxError)])
+      map(({response}) => makeDone(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE_EXAMPLE__SEARCH_OF_USAGES, ajaxError)])
     );
   }),
 );
 
+const limitExample = 120;
 export const MEANING_USAGE_EXAMPLE__SEARCH_TERM = 'MEANING_USAGE_EXAMPLE__SEARCH_TERM';
 export const actionSearchExamples = (term: string): AnyAction => {
   const data = {
-    limitation: new DbLimitation(0, 120),
+    limitation: new DbLimitation(0, limitExample),
     filters: { sentence: `% ${term} %` },
   };
-  return createActionStart(MEANING_USAGE_EXAMPLE__SEARCH_TERM, data);
+  return makeStart(MEANING_USAGE_EXAMPLE__SEARCH_TERM, data);
 };
 const epicSearchExamples = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE_EXAMPLE__SEARCH_TERM}_START`),
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage_example.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SEARCH_TERM, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SEARCH_TERM, ajaxError)])
+      map(({response}) => makeDone(MEANING_USAGE_EXAMPLE__SEARCH_TERM, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE_EXAMPLE__SEARCH_TERM, ajaxError)])
     );
   }),
 );
@@ -68,7 +62,7 @@ const epicSearchExamples = (action$: ActionsObservable<AnyAction>) => action$.pi
 export const MEANING_USAGE_EXAMPLE__DELETE = 'MEANING_USAGE_EXAMPLE__DELETE';
 export const actionDeleteExample = (keyid: string) => {
   const data = { keyid };
-  return createActionStart(MEANING_USAGE_EXAMPLE__DELETE, data);
+  return makeStart(MEANING_USAGE_EXAMPLE__DELETE, data);
 };
 const epicDeleteExample = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE_EXAMPLE__DELETE}_START`),
@@ -77,13 +71,13 @@ const epicDeleteExample = (action$: ActionsObservable<AnyAction>) => action$.pip
     data,
     headerAuth(readToken())
   ).pipe(
-    map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__DELETE, response.data)),
-    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__DELETE, ajaxError)])
+    map(({response}) => makeDone(MEANING_USAGE_EXAMPLE__DELETE, response.data)),
+    catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE_EXAMPLE__DELETE, ajaxError)])
   )),
 );
 
 export const MEANING_USAGE_EXAMPLE__SAVE = 'MEANING_USAGE_EXAMPLE__SAVE';
-export const actionSaveExample = (value: IMeaningExample) => createActionStart(
+export const actionSaveExample = (value: IMeaningExample) => makeStart(
   MEANING_USAGE_EXAMPLE__SAVE,
   {data: value},
 );
@@ -94,8 +88,8 @@ const epicSaveExample = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     data,
     headerAuth(readToken())
   ).pipe(
-    map(({response}) => createActionDone(MEANING_USAGE_EXAMPLE__SAVE, response.data)),
-    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE_EXAMPLE__SAVE, ajaxError)])
+    map(({response}) => makeDone(MEANING_USAGE_EXAMPLE__SAVE, response.data)),
+    catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE_EXAMPLE__SAVE, ajaxError)])
   )),
 );
 
@@ -109,14 +103,20 @@ export const epics = combineEpics(
 );
 
 // ----- REDUCER ------------------------------------------------------------------------------------------------------
-
+const initialState: MeaningExampleState = {
+  isDeleting: false,
+  isSaving: false,
+  isSearching: false,
+  items: [],
+  termExamples: [],
+};
 /**
  * Process only actions of MEANING_
- * @param {IMeaningExampleState} state
+ * @param {MeaningExampleState} state
  * @param action
- * @returns {IMeaningExampleState}
+ * @returns {MeaningExampleState}
  */
-export default(state = MEANING_USAGE_EXAMPLE_STATE_INIT, action: any): IMeaningExampleState => {
+const reducer: Reducer<MeaningExampleState> = (state = initialState, action: AnyAction) => {
 
   // if this action is not belong to MEANING, return the original state
   if (action.type.indexOf('MEANING_USAGE_EXAMPLE__') !== 0) {
@@ -185,3 +185,4 @@ export default(state = MEANING_USAGE_EXAMPLE_STATE_INIT, action: any): IMeaningE
 
   }
 };
+export default reducer;

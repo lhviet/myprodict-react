@@ -1,17 +1,31 @@
-import { IWordState } from '^/3_store/ducks/word';
-import { IPronState } from '^/3_store/ducks/pronunciation';
-import { IMeaningState } from '^/3_store/ducks/meaning';
-import { IMeaningUsageState } from '^/3_store/ducks/meaning_usage';
-import { IMeaningExampleState } from '^/3_store/ducks/meaning_usage_example';
-import { ISearchState } from '^/3_store/ducks/search';
-import { IUserState } from '^/3_store/ducks/user';
+import { WordState } from '^/3_store/ducks/word';
+import { PronState } from '^/3_store/ducks/pronunciation';
+import { MeaningState } from '^/3_store/ducks/meaning';
+import { MeaningUsageState } from '^/3_store/ducks/meaning_usage';
+import { MeaningExampleState } from '^/3_store/ducks/meaning_usage_example';
+import { SearchState } from '^/3_store/ducks/search';
+import { UserState } from '^/3_store/ducks/user';
+import { ReadAloudState } from '^/3_store/ducks/read_aloud';
 
-export interface IStoreState {
-  word: IWordState;
-  pron: IPronState;
-  meaning: IMeaningState;
-  meaning_usage: IMeaningUsageState;
-  meaning_usage_example: IMeaningExampleState;
-  search: ISearchState;
-  user: IUserState;
+export interface StoreState {
+  word: WordState;
+  pron: PronState;
+  meaning: MeaningState;
+  meaningUsage: MeaningUsageState;
+  meaningExample: MeaningExampleState;
+  search: SearchState;
+  user: UserState;
+  readAloud: ReadAloudState;
+}
+
+export interface TermExample {
+  term: string;
+  examples: string[];
+}
+
+export enum FetchStatus {
+  IDLE = 1,
+  FETCHING,
+  SUCCESS,
+  FAIL,
 }

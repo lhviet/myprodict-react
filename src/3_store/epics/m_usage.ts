@@ -2,12 +2,12 @@ import { Action } from 'redux';
 import { ActionsObservable, StateObservable } from 'redux-observable';
 import { filter, map } from 'rxjs/operators';
 import { MEANING_USAGE__SAVE, actionSearchUsagesOfWord } from '../ducks/meaning_usage';
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 
 // reloading Meanings of current Word after a Mean save/submitted
 export const epicFetchUsagesOfCurrentWord = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<IStoreState>,
+  state$: StateObservable<StoreState>,
 ) => {
   return action$.pipe(
     filter(action =>

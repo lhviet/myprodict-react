@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { colors, styles } from '^/theme';
@@ -43,17 +43,17 @@ interface Props {
 }
 export default (props: Props) => {
   const [isReadOnly, setReadOnly] = useState(true);
-  const [text, setText] = useState(props.value || '');
+  const text = props.value || '';
+
   const matches = text.match(/\S+/g);
   const wordNumber = matches ? matches.length : 0;
   const wordNumberLabel = `${wordNumber} word${wordNumber > 1 ? 's' : ''}`;
 
-  const onChange = ({ currentTarget }: React.SyntheticEvent<HTMLTextAreaElement>) => setText(currentTarget.value);
   const onClick = () => setReadOnly(false);
-  const onBlur = () => {
-    setReadOnly(true);
+  const onBlur = () => setReadOnly(true);
+  const onChange = ({ currentTarget }: React.SyntheticEvent<HTMLTextAreaElement>) => {
     if (props.onBlur) {
-      props.onBlur(text);
+      props.onBlur(currentTarget.value);
     }
   };
 
@@ -63,10 +63,10 @@ export default (props: Props) => {
         value={text}
         className={props.className}
         readOnly={isReadOnly}
-        onChange={onChange}
+        onClick={onClick}
         onBlur={onBlur}
         onMouseOut={onBlur}
-        onClick={onClick}
+        onChange={onChange}
       />
       <WordCount>{wordNumberLabel}</WordCount>
     </Root>

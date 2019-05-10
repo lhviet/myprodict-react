@@ -11,7 +11,7 @@ import {
 } from 'myprodict-model/lib-esm';
 
 import { styles } from '^/theme';
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 
 import Word from '^/1_components/atoms/Word';
 import { actionSetCurrentWordId } from '^/3_store/ducks/word';
@@ -26,31 +26,30 @@ const Root = styled.div<RootProps>`
   ${styles.scrollbar};
 `;
 
+const defaultLimit = 30;
+
 interface Props {
+  className?: string;
+
   words: IWord[];
   pronunciations: IPronunciation[];
   meanings: IMeaning[];
   usages: IMeaningUsage[];
+  keyword?: string;
   currentWordId?: string;
-  className?: string;
+  limit?: number;
   isEditable?: boolean;
+
   setCurrentWord(keyid: string): any;
 }
 
-interface State {
-}
-
-class ListSearchWord extends React.Component<Props, State> {
-  constructor(props: Props, context: any) {
-    super(props, context);
-    this.state = {
-    };
-  }
-
-  render() {
-    const { words, pronunciations, meanings, usages, currentWordId, isEditable, setCurrentWord }: Props = this.props;
-
-    const wordItems: ReactNode = words.map((word: IWord) => {
+function ListSearchWord({
+  words, pronunciations, meanings, usages, keyword, currentWordId, isEditable, setCurrentWord, limit, className,
+}: Props) {
+  const wordItems: ReactNode = words
+    .filter((word: IWord) => keyword ? word.value.word.startsWith(keyword) : true)
+    .splice(0, limit || defaultLimit)
+    .map((word: IWord) => {
       const predicate = {value: {word_keyid: word.keyid}};
       const meaningNumber = _.filter(meanings, predicate).length;
       const usageNumber = _.filter(usages, predicate).length;
@@ -72,31 +71,28 @@ class ListSearchWord extends React.Component<Props, State> {
       );
     });
 
-    return (
-      <Root className={this.props.className}>
-        {wordItems}
-      </Root>
-    );
-  }
+  return (
+    <Root className={className}>
+      {wordItems}
+    </Root>
+  );
 }
 
-const mapStateToProps = ({ word, pron, meaning, meaning_usage }: IStoreState) => {
-  const words: IWord[] = word.searchResult.models || [];
-  const currentWord: IWord | undefined = _.find(words, { keyid: word.currentWordKeyid });
+const mapStateToProps = ({ word, pron, meaning, meaningUsage }: StoreState) => {
+  const currentWord: IWord | undefined = _.find(word.words, { keyid: word.currentWordKeyid });
   const currentWordId = currentWord ? currentWord.keyid : undefined;
 
   return {
-    words,
+    words: word.words,
     currentWordId,
     pronunciations: pron.items,
     meanings: meaning.items,
-    usages: meaning_usage.items,
+    usages: meaningUsage.items,
   };
 };
-
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  setCurrentWord(wordKeyid: string) {
-    dispatch(actionSetCurrentWordId(wordKeyid));
+  setCurrentWord(keyid: string) {
+    dispatch(actionSetCurrentWordId(keyid));
   },
 });
 

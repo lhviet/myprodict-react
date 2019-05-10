@@ -1,22 +1,20 @@
 import { AnyAction } from 'redux';
 
-export function createActionStart(type: string, data?: any): AnyAction {
+export function makeStart(type: string, data?: any): AnyAction {
   return {
+    data,
     type: `${type}_START`,
-      data
   };
 }
-
-export function createActionDone(type: string, data?: any): AnyAction {
+export function makeDone(type: string, data?: any): AnyAction {
   return {
+    data,
     type: `${type}_DONE`,
-      data
   };
 }
-
-export function createActionFailed(type: string, data?: any): AnyAction {
+export function makeFailed(type: string, data?: any): AnyAction {
   return {
+    data,
     type: `${type}_FAILED`,
-      data
   };
 }

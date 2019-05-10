@@ -4,7 +4,7 @@ import { ActionsObservable, StateObservable } from 'redux-observable';
 import { filter, map } from 'rxjs/operators';
 import { IWord } from 'myprodict-model/lib-esm';
 
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 
 import { MEANING_USAGE__SEARCH } from '^/3_store/ducks/meaning_usage';
 import {
@@ -16,13 +16,13 @@ import { WORD__SET_CURRENT } from '^/3_store/ducks/word';
 
 export const epicFetchExamplesOfCurrentWord = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<IStoreState>
+  state$: StateObservable<StoreState>
 ) => {
   return action$.pipe(
     filter(action => action.type === `${WORD__SET_CURRENT}`),
-    map(({ data: wordKeyid }: AnyAction) => {
-      const word = _.find(state$.value.word.searchResult.models, { keyid: wordKeyid }) as IWord;
-      const examples = state$.value.meaning_usage_example.termExamples;
+    map(({ data: keyid }: AnyAction) => {
+      const word = _.find(state$.value.word.words, { keyid }) as IWord;
+      const examples = state$.value.meaningExample.termExamples;
       if (
         word &&
         examples.length > 0 &&
@@ -51,14 +51,14 @@ export const epicFetchExamplesOfUsage = (action$: ActionsObservable<Action>) => 
 // reloading Meanings of current Word after a Mean save/submitted
 export const epicFetchExamplesOfUsages = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<IStoreState>
+  state$: StateObservable<StoreState>
 ) => {
   return action$.pipe(
     filter(action =>
       action.type === `${MEANING_USAGE_EXAMPLE__SAVE}_DONE`
     ),
     map(() => {
-      const { items } = state$.value.meaning_usage;
+      const { items } = state$.value.meaningUsage;
       return actionSearchExamplesOfUsage(items.map((item: any) => item.keyid));
     })
   );

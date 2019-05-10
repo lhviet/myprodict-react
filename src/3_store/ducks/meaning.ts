@@ -4,24 +4,18 @@ import { HOST } from '^/app-configs';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 
-import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
+import { makeDone, makeFailed, makeStart } from '^/4_services/action-service';
 import { readToken } from '^/4_services/local-storage-service';
 import { headerAuth, headerJson } from '^/4_services/http-service';
 
-export interface IMeaningState {
+export interface MeaningState {
   isDeleting: boolean;
   isSaving: boolean;
   isSearching: boolean;
   items: IMeaning[];
 }
-export const MEANING_STATE_INIT: IMeaningState = {
-  isDeleting: false,
-  isSaving: false,
-  isSearching: false,
-  items: [],
-};
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
@@ -31,14 +25,14 @@ export const actionSearchMeansOfWord = (wordKeyids: string[]): AnyAction => {
     limitation: new DbLimitation(),
     filters: { word_keyid: {in: wordKeyids} },
   };
-  return createActionStart(MEANING__SEARCH, data);
+  return makeStart(MEANING__SEARCH, data);
 };
 const epicSearchMeansOfWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING__SEARCH}_START`),
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(MEANING__SEARCH, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__SEARCH, ajaxError)])
+      map(({response}) => makeDone(MEANING__SEARCH, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING__SEARCH, ajaxError)])
     );
   }),
 );
@@ -46,26 +40,26 @@ const epicSearchMeansOfWord = (action$: ActionsObservable<AnyAction>) => action$
 export const MEANING__DELETE = 'MEANING__DELETE';
 export const actionDeleteMean = (keyid: string) => {
   const data = { keyid };
-  return createActionStart(MEANING__DELETE, data);
+  return makeStart(MEANING__DELETE, data);
 };
 const epicDeleteMean = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING__DELETE}_START`),
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.delete), data, headerAuth(readToken())).pipe(
-      map(({response}) => createActionDone(MEANING__DELETE, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__DELETE, ajaxError)])
+      map(({response}) => makeDone(MEANING__DELETE, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING__DELETE, ajaxError)])
     );
   }),
 );
 
 export const MEANING__SAVE = 'MEANING__SAVE';
-export const actionSaveMean = (value: IMeaning) => createActionStart(MEANING__SAVE, {data: value});
+export const actionSaveMean = (value: IMeaning) => makeStart(MEANING__SAVE, {data: value});
 const epicSaveMean = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING__SAVE}_START`),
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning.save), data, headerAuth(readToken())).pipe(
-      map(({response}) => createActionDone(MEANING__SAVE, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING__SAVE, ajaxError)])
+      map(({response}) => makeDone(MEANING__SAVE, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING__SAVE, ajaxError)])
     );
   }),
 );
@@ -79,15 +73,19 @@ export const epics = combineEpics(
 );
 
 // ----- REDUCER ------------------------------------------------------------------------------------------------------
-
+const initialState: MeaningState = {
+  isDeleting: false,
+  isSaving: false,
+  isSearching: false,
+  items: [],
+};
 /**
  * Process only actions of MEANING_
- * @param {IMeaningState} state
+ * @param {MeaningState} state
  * @param action
- * @returns {IMeaningState}
+ * @returns {MeaningState}
  */
-export default(state = MEANING_STATE_INIT, action: AnyAction): IMeaningState => {
-
+const reducer: Reducer<MeaningState> = (state = initialState, action: AnyAction) => {
   // if this action is not belong to MEANING, return the original state
   if (action.type.indexOf('MEANING__') !== 0) {
     return state;
@@ -135,3 +133,4 @@ export default(state = MEANING_STATE_INIT, action: AnyAction): IMeaningState => 
       return state;
   }
 };
+export default reducer;

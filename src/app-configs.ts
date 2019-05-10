@@ -1,8 +1,8 @@
 const HOST = {
   api: {
     getUrl: (path: string): string => (path === HOST.api.base ? path : (HOST.api.base + path)),
-    // base: '//localhost:3001',
-    base: 'http://ec2-13-229-247-9.ap-southeast-1.compute.amazonaws.com:3001',
+    base: '//localhost:3001',
+    // base: 'http://ec2-13-229-247-9.ap-southeast-1.compute.amazonaws.com:3001',
     user: {
       login: '/api/auth/login',
       logout: '/api/auth/logout',
@@ -48,6 +48,9 @@ const HOST = {
       word_has_pron: '/api/search/word-has-pronunciation',
       word_no_pron: '/api/search/word-has-no-pronunciation',
       word_no_mean_usage: '/api/search/word-has-no-mean-usage',
+    },
+    read_aloud: {
+      fetch: (order: number) => `/api/read-aloud/${order}`,
     },
     oxford: '/o?w=',
   },

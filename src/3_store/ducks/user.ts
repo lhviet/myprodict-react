@@ -1,4 +1,4 @@
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
@@ -6,11 +6,11 @@ import { MPTypes } from 'myprodict-model/lib-esm';
 
 import { HOST } from '^/app-configs';
 
-import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
+import { makeDone, makeFailed, makeStart } from '^/4_services/action-service';
 import { headerAuth } from '^/4_services/http-service';
 import { readToken, removeToken, storeToken } from '^/4_services/local-storage-service';
 
-export interface IUserState {
+export interface UserState {
   // auth
   auth_isLoggedIn: boolean;
   // user
@@ -27,21 +27,6 @@ export interface IUserState {
   role: MPTypes.UserRole;
 }
 
-export const USER_STATE_INIT: IUserState = {
-  auth_isLoggedIn: false,
-  keyid: '',
-  username: '',
-  email: '',
-  displayname: '',
-  avatar_url: '',
-  cover_url: '',
-  home_url: '',
-  gender: '',
-  language: '',
-  country: '',
-  role: MPTypes.UserRole.User,
-};
-
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
 // set Logged-in with token stored in LocalStorage
@@ -56,19 +41,19 @@ const epicSetLoggedIn = (action$: ActionsObservable<AnyAction>) => action$.pipe(
 );
 
 export const USER__AUTH_SET_LOGGED_OUT = 'USER__AUTH_SET_LOGGED_OUT';
-export const actionLoggedOut = () => createActionStart(USER__AUTH_SET_LOGGED_OUT);
+export const actionLoggedOut = () => makeStart(USER__AUTH_SET_LOGGED_OUT);
 const epicLogout = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${USER__AUTH_SET_LOGGED_OUT}_START`),
   mergeMap(() => {
     return ajax.post(HOST.api.getUrl(HOST.api.user.logout)).pipe(
-      map(({response}) => createActionDone(USER__AUTH_SET_LOGGED_OUT, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(USER__AUTH_SET_LOGGED_OUT, ajaxError)])
+      map(({response}) => makeDone(USER__AUTH_SET_LOGGED_OUT, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(USER__AUTH_SET_LOGGED_OUT, ajaxError)])
     );
   }),
 );
 
 export const USER__FETCH_INFO = 'USER__FETCH_INFO';
-export const actionFetchUserInfo = () => createActionStart(USER__FETCH_INFO);
+export const actionFetchUserInfo = () => makeStart(USER__FETCH_INFO);
 const fetchUserData1 = () => ajax.get(
   HOST.api.getUrl(HOST.api.user.loadUser),
   headerAuth(readToken()),
@@ -79,8 +64,8 @@ const epicFetchUserInfo1 = (action$: ActionsObservable<AnyAction>) => action$.pi
   ofType(`${USER__FETCH_INFO}_START`),
   switchMap(() => {
     return fetchUserData1().pipe(
-      map(({response}) => createActionDone(USER__FETCH_INFO, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(USER__FETCH_INFO, ajaxError)])
+      map(({response}) => makeDone(USER__FETCH_INFO, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(USER__FETCH_INFO, ajaxError)])
     );
   }),
 );
@@ -88,8 +73,8 @@ const epicFetchUserInfo2 = (action$: ActionsObservable<AnyAction>) => action$.pi
   ofType(`${USER__FETCH_INFO}_START`),
   switchMap(() => {
     return fetchUserData2().pipe(
-      map(({response}) => createActionDone(USER__FETCH_INFO, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(USER__FETCH_INFO, ajaxError)])
+      map(({response}) => makeDone(USER__FETCH_INFO, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(USER__FETCH_INFO, ajaxError)])
     );
   }),
 );
@@ -104,14 +89,27 @@ export const epics = combineEpics(
 );
 
 // ----- REDUCER ------------------------------------------------------------------------------------------------------
-
+const initialState: UserState = {
+  auth_isLoggedIn: false,
+  keyid: '',
+  username: '',
+  email: '',
+  displayname: '',
+  avatar_url: '',
+  cover_url: '',
+  home_url: '',
+  gender: '',
+  language: '',
+  country: '',
+  role: MPTypes.UserRole.User,
+};
 /**
  * Process only actions of WORD__
- * @param {IUserState} state
+ * @param {UserState} state
  * @param action
- * @returns {IUserState}
+ * @returns {UserState}
  */
-export default(state = USER_STATE_INIT, action: any): IUserState => {
+const reducer: Reducer<UserState> = (state = initialState, action: any) => {
 
   // if this action is not belong to WORD, return the original state
   if (action.type.indexOf('USER__') !== 0) {
@@ -141,3 +139,4 @@ export default(state = USER_STATE_INIT, action: any): IUserState => {
       return state;
   }
 };
+export default reducer;

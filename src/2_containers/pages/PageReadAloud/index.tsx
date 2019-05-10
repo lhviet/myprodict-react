@@ -5,18 +5,20 @@ import { capitalize } from 'lodash-es';
 import WaveSurfer from 'wavesurfer.js';
 import * as Diff from 'diff';
 import styled from 'styled-components';
+import { IReadAloud } from 'myprodict-model/lib-esm';
 
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 import { colors, styles } from '^/theme';
 
+import LoadingIconRaw from '^/1_components/atoms/LoadingIcon';
 import FocusEditTextArea from '^/1_components/atoms/FocusEditTextArea';
 import RecordingBtn from '^/1_components/atoms/RecordingBtn';
 import ListSearchWord from '^/2_containers/components/ListSearchWord';
-import { actionSearchWord, IWordState } from '^/3_store/ducks/word';
+import { actionSearchWord, WordState } from '^/3_store/ducks/word';
+import { fetchReadAloud } from '^/3_store/ducks/read_aloud';
+import { downloadRecordingAudio } from '^/4_services/file-service';
 
 import PageLayout from '../_PageLayout';
-import LoadingIconRaw from '^/1_components/atoms/LoadingIcon';
-import { downloadRecordingAudio } from '^/4_services/file-service';
 
 const alpha6 = 0.6;
 const alpha8 = 0.8;
@@ -98,13 +100,6 @@ const RecognitionWrapper = styled.div<DisplayProps>`
   transition: display ease .2s, min-height ease .2s;
   display: ${props => props.isDisplay ? 'block' : 'none'};
 `;
-const LoadingWrapper = styled.div<DisplayProps>`
-  width: 100%;
-  text-align: center;
-  align-self: center;
-  transition: display ease-in .2s;
-  display: ${props => props.isDisplay ? 'block' : 'none'};
-`;
 const WaveSurferTableWrapper = styled.table`
   border: none;
   width: 100%;
@@ -168,7 +163,10 @@ enum RecordStatus {
   Stopped,
 }
 interface Props {
-  word: IWordState;
+  ras: Array<IReadAloud>;
+  word: WordState;
+
+  fetchReadAloud(order: number): any;
   searchWord(words: Array<string>): any;
 }
 interface State {
@@ -203,6 +201,8 @@ class PageReadAloud extends React.Component<Props, State> {
       console.error('SpeechRecognition is not available on this browser.');
     }
 
+    props.fetchReadAloud(1);
+
     this.state = {
       recordStatus: RecordStatus.Idle,
       isMicAvailable: true,
@@ -230,6 +230,13 @@ class PageReadAloud extends React.Component<Props, State> {
       }
       this.setState({ isPlaying: false });
     });
+  }
+
+  componentDidUpdate({ras: prevRas}: Readonly<Props>, {sampleText : prevText}: Readonly<State>): void {
+    const { ras }: Props = this.props;
+    if (prevRas.length === 0 && ras.length > 0 && prevText.length === 0) {
+      this.setState({ sampleText: ras[0].value.ra_content });
+    }
   }
 
   onRecognitionResult = (event: SpeechRecognitionEvent) => {
@@ -342,6 +349,7 @@ class PageReadAloud extends React.Component<Props, State> {
       <PageLayout>
         <Root>
           <Left>
+            <Title>Notice words</Title>
             <ListSearchWord />
           </Left>
           <Right>
@@ -388,14 +396,18 @@ class PageReadAloud extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: IStoreState) => ({
+const mapStateToProps = (state: StoreState) => ({
+  ras: state.readAloud.ras,
   word: state.word,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  searchWord(words: Array<string>) {
+  fetchReadAloud(order: number): void {
+    dispatch(fetchReadAloud(order));
+  },
+  searchWord(words: Array<string>): void {
     dispatch(actionSearchWord(words));
-  }
+  },
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PageReadAloud);

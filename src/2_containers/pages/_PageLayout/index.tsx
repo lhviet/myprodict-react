@@ -5,12 +5,12 @@ import { Subject } from 'rxjs/internal/Subject';
 import { Action, Dispatch } from 'redux';
 import styled from 'styled-components';
 
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 import { zIndex } from '^/theme';
 
 import NavBarTop from '^/1_components/molecules/NavBarTop';
-import { IUserState, actionSetLoggedIn } from '^/3_store/ducks/user';
-import { IWordState } from '^/3_store/ducks/word';
+import { UserState, actionSetLoggedIn } from '^/3_store/ducks/user';
+import { WordState } from '^/3_store/ducks/word';
 import { readToken } from '^/4_services/local-storage-service';
 
 const Root = styled.div`
@@ -31,8 +31,8 @@ const Body = styled.div`
 
 interface Props {
   isResultListDisplay?: boolean; // enable result list to display or not
-  user: IUserState;
-  word: IWordState;
+  user: UserState;
+  word: WordState;
   setLoggedIn(token: string): any;
 }
 
@@ -59,7 +59,7 @@ class PageLayout extends React.Component<Props> {
   }
 }
 
-const mapStateToProps = (state: IStoreState) => ({
+const mapStateToProps = (state: StoreState) => ({
   user: state.user,
   word: state.word,
 });

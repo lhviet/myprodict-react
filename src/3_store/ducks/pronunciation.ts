@@ -3,40 +3,34 @@ import * as _ from 'lodash-es';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { ajax, AjaxError } from 'rxjs/ajax';
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 
 import { HOST } from '^/app-configs';
 
-import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
+import { makeDone, makeFailed, makeStart } from '^/4_services/action-service';
 import { headerAuth, headerJson } from '^/4_services/http-service';
 import { readToken } from '^/4_services/local-storage-service';
 
-export interface IPronState {
+export interface PronState {
   isDeleting: boolean;
   isSaving: boolean;
   isSearching: boolean;
   items: IPronunciation[];
 }
-export const PRON_STATE_INIT: IPronState = {
-  isDeleting: false,
-  isSaving: false,
-  isSearching: false,
-  items: [],
-};
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
 export const PRON__DELETE = 'PRON__DELETE';
 export const actionDeletePron = (keyid: string) => {
   const data = { keyid };
-  return createActionStart(PRON__DELETE, data);
+  return makeStart(PRON__DELETE, data);
 };
 const epicDeletePron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${PRON__DELETE}_START`),
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.delete), data, headerAuth(readToken())).pipe(
-      map(({response}) => createActionDone(PRON__DELETE, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__DELETE, ajaxError)])
+      map(({response}) => makeDone(PRON__DELETE, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(PRON__DELETE, ajaxError)])
     );
   }),
 );
@@ -44,26 +38,26 @@ const epicDeletePron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
 export const PRON__FETCH = 'PRON__FETCH';
 export const actionFetchPron = (keyid: string) => {
   const data = { keyid };
-  return createActionStart(PRON__FETCH, data);
+  return makeStart(PRON__FETCH, data);
 };
 const epicFetchPron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${PRON__FETCH}_START`),
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(PRON__FETCH, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__FETCH, ajaxError)])
+      map(({response}) => makeDone(PRON__FETCH, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(PRON__FETCH, ajaxError)])
     );
   }),
 );
 
 export const PRON__SAVE = 'PRON__SAVE';
-export const actionSavePron = (value: IPronunciation) => createActionStart(PRON__SAVE, {data: value});
+export const actionSavePron = (value: IPronunciation) => makeStart(PRON__SAVE, {data: value});
 const epicSavePron = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${PRON__SAVE}_START`),
   mergeMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.save), data, headerAuth(readToken())).pipe(
-      map(({response}) => createActionDone(PRON__SAVE, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__SAVE, ajaxError)])
+      map(({response}) => makeDone(PRON__SAVE, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(PRON__SAVE, ajaxError)])
     );
   }),
 );
@@ -74,14 +68,14 @@ export const actionSearchPronOfWord = (wordKeyids: string[]): AnyAction => {
     limitation: new DbLimitation(),
     filters: { word_keyid: {in: wordKeyids} },
   };
-  return createActionStart(PRON__OF_WORD_FETCH, data);
+  return makeStart(PRON__OF_WORD_FETCH, data);
 };
 const epicSearchPronOfWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${PRON__OF_WORD_FETCH}_START`),
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.pron.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(PRON__OF_WORD_FETCH, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(PRON__OF_WORD_FETCH, ajaxError)])
+      map(({response}) => makeDone(PRON__OF_WORD_FETCH, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(PRON__OF_WORD_FETCH, ajaxError)])
     );
   }),
 );
@@ -96,15 +90,19 @@ export const epics = combineEpics(
 );
 
 // ----- REDUCER ------------------------------------------------------------------------------------------------------
-
+const initialState: PronState = {
+  isDeleting: false,
+  isSaving: false,
+  isSearching: false,
+  items: [],
+};
 /**
  * Process only actions of PRON_
- * @param {IPronState} state
+ * @param {PronState} state
  * @param action
- * @returns {IPronState}
+ * @returns {PronState}
  */
-export default(state = PRON_STATE_INIT, action: any): IPronState => {
-
+const reducer: Reducer<PronState> = (state = initialState, action: AnyAction) => {
   // if this action is not belong to PRON, return the original state
   if (action.type.indexOf('PRON__') !== 0) {
     return state;
@@ -151,3 +149,4 @@ export default(state = PRON_STATE_INIT, action: any): IPronState => {
 
   }
 };
+export default reducer;

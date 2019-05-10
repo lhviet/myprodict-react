@@ -3,26 +3,20 @@ import * as _ from 'lodash-es';
 import { ActionsObservable, combineEpics, ofType } from 'redux-observable';
 import { ajax, AjaxError } from 'rxjs/ajax';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 
 import { HOST } from '^/app-configs';
 
-import { createActionDone, createActionFailed, createActionStart } from '^/4_services/action-service';
+import { makeDone, makeFailed, makeStart } from '^/4_services/action-service';
 import { headerAuth, headerJson } from '^/4_services/http-service';
 import { readToken } from '^/4_services/local-storage-service';
 
-export interface IMeaningUsageState {
+export interface MeaningUsageState {
   isDeleting: boolean;
   isSaving: boolean;
   isSearching: boolean;
   items: IMeaningUsage[];
 }
-export const MEANING_USAGE_STATE_INIT: IMeaningUsageState = {
-  isDeleting: false,
-  isSaving: false,
-  isSearching: false,
-  items: [],
-};
 
 // ----- ACTIONS & EPICS ----------------------------------------------------------------------------------------------
 
@@ -32,14 +26,14 @@ export const actionSearchUsagesOfWord = (wordKeyids: string[]): AnyAction => {
     limitation: new DbLimitation(),
     filters: { word_keyid: {in: wordKeyids} },
   };
-  return createActionStart(MEANING_USAGE__SEARCH, data);
+  return makeStart(MEANING_USAGE__SEARCH, data);
 };
 const epicSearchUsagesOfWord = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE__SEARCH}_START`),
   switchMap(({data}) => {
     return ajax.post(HOST.api.getUrl(HOST.api.meaning_usage.search), data, headerJson).pipe(
-      map(({response}) => createActionDone(MEANING_USAGE__SEARCH, response.data)),
-      catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__SEARCH, ajaxError)])
+      map(({response}) => makeDone(MEANING_USAGE__SEARCH, response.data)),
+      catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE__SEARCH, ajaxError)])
     );
   }),
 );
@@ -47,7 +41,7 @@ const epicSearchUsagesOfWord = (action$: ActionsObservable<AnyAction>) => action
 export const MEANING_USAGE__DELETE = 'MEANING_USAGE__DELETE';
 export const actionDeleteUsage = (keyid: string) => {
   const data = { keyid };
-  return createActionStart(MEANING_USAGE__DELETE, data);
+  return makeStart(MEANING_USAGE__DELETE, data);
 };
 const epicDeleteUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE__DELETE}_START`),
@@ -56,13 +50,13 @@ const epicDeleteUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     data,
     headerAuth(readToken()),
   ).pipe(
-    map(({response}) => createActionDone(MEANING_USAGE__DELETE, response.data)),
-    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__DELETE, ajaxError)])
+    map(({response}) => makeDone(MEANING_USAGE__DELETE, response.data)),
+    catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE__DELETE, ajaxError)])
   )),
 );
 
 export const MEANING_USAGE__SAVE = 'MEANING_USAGE__SAVE';
-export const actionSaveUsage = (value: IMeaningUsage) => createActionStart(MEANING_USAGE__SAVE, {data: value});
+export const actionSaveUsage = (value: IMeaningUsage) => makeStart(MEANING_USAGE__SAVE, {data: value});
 const epicSaveUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
   ofType(`${MEANING_USAGE__SAVE}_START`),
   mergeMap(({data}) => ajax.post(
@@ -70,8 +64,8 @@ const epicSaveUsage = (action$: ActionsObservable<AnyAction>) => action$.pipe(
     data,
     headerAuth(readToken())
   ).pipe(
-    map(({response}) => createActionDone(MEANING_USAGE__SAVE, response.data)),
-    catchError((ajaxError: AjaxError) => [createActionFailed(MEANING_USAGE__SAVE, ajaxError)])
+    map(({response}) => makeDone(MEANING_USAGE__SAVE, response.data)),
+    catchError((ajaxError: AjaxError) => [makeFailed(MEANING_USAGE__SAVE, ajaxError)])
   )),
 );
 
@@ -84,15 +78,19 @@ export const epics = combineEpics(
 );
 
 // ----- REDUCER ------------------------------------------------------------------------------------------------------
-
+const initialState: MeaningUsageState = {
+  isDeleting: false,
+  isSaving: false,
+  isSearching: false,
+  items: [],
+};
 /**
  * Process only actions of MEANING_
- * @param {IMeaningUsageState} state
+ * @param {MeaningUsageState} state
  * @param action
- * @returns {IMeaningUsageState}
+ * @returns {MeaningUsageState}
  */
-export default(state = MEANING_USAGE_STATE_INIT, action: any): IMeaningUsageState => {
-
+const reducer: Reducer<MeaningUsageState> = (state = initialState, action: AnyAction) => {
   // if this action is not belong to MEANING, return the original state
   if (action.type.indexOf('MEANING_USAGE__') !== 0) {
     return state;
@@ -136,3 +134,4 @@ export default(state = MEANING_USAGE_STATE_INIT, action: any): IMeaningUsageStat
       return state;
   }
 };
+export default reducer;

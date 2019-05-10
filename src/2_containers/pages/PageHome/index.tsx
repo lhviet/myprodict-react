@@ -10,7 +10,7 @@ import {
   IWord
 } from 'myprodict-model/lib-esm';
 
-import { IStoreState } from '^/types';
+import { StoreState } from '^/types';
 
 import PageLayout from '../_PageLayout';
 
@@ -19,12 +19,12 @@ import CardMeaning from '^/1_components/atoms/CardMeaning';
 import CardExampleSentence from '^/1_components/atoms/CardExampleSentence';
 import SearchInputField from '^/1_components/atoms/SearchInputField';
 import ListSearchWord from '^/2_containers/components/ListSearchWord';
-import { IWordState, actionSetCurrentWordId, actionSearchWord } from '^/3_store/ducks/word';
-import { IPronState } from '^/3_store/ducks/pronunciation';
-import { IMeaningState } from '^/3_store/ducks/meaning';
-import { IUserState } from '^/3_store/ducks/user';
-import { IMeaningUsageState } from '^/3_store/ducks/meaning_usage';
-import { IMeaningExampleState, actionSearchExamples } from '^/3_store/ducks/meaning_usage_example';
+import { WordState, actionSetCurrentWordId, actionSearchWord } from '^/3_store/ducks/word';
+import { PronState } from '^/3_store/ducks/pronunciation';
+import { MeaningState } from '^/3_store/ducks/meaning';
+import { UserState } from '^/3_store/ducks/user';
+import { MeaningUsageState } from '^/3_store/ducks/meaning_usage';
+import { MeaningExampleState, actionSearchExamples } from '^/3_store/ducks/meaning_usage_example';
 
 import { colors, styles } from '^/theme';
 
@@ -56,22 +56,25 @@ const Right = styled.div`
   ${styles.scrollbar};
 `;
 
+const searchDebouncePeriod = 300; // milliseconds
+const limitWordToSearch = 30; // milliseconds
+const sampleSentenceNumber = 5; // milliseconds
+
 interface Props {
-  word: IWordState;
-  pron: IPronState;
-  meaning: IMeaningState;
-  user: IUserState;
-  mUsage: IMeaningUsageState;
-  mExample: IMeaningExampleState;
+  word: WordState;
+  pron: PronState;
+  meaning: MeaningState;
+  user: UserState;
+  mUsage: MeaningUsageState;
+  mExample: MeaningExampleState;
 
   setCurrentWord(keyid: string): any;
   searchWords(keyword: string, offset: number, limit: number): any;
 }
-
 interface State {
+  keyword: string;
   wordItems: IWord[];
 }
-
 class PageHome extends React.Component<Props, State> {
   // create a Subject instance
   subjectSearch$: Subject<string> = new Subject();
@@ -79,7 +82,8 @@ class PageHome extends React.Component<Props, State> {
   constructor(props: Props, context: any) {
     super(props, context);
     this.state = {
-      wordItems: []
+      keyword: '',
+      wordItems: [],
     };
   }
 
@@ -87,14 +91,13 @@ class PageHome extends React.Component<Props, State> {
     this.setupWordItems(this.props.word);
 
     this.subjectSearch$.pipe(
-      debounceTime(300),
-      // distinctUntilChanged(),  // do not need to filter similar search term
-      map((value: string) => this.props.searchWords(value, 0, 30)),
+      debounceTime(searchDebouncePeriod),
+      map((keyword: string) => this.props.searchWords(keyword, 0, limitWordToSearch)),
     ).subscribe();
 
     // init first search
     const {word} = this.props;
-    if (!word.searchResult.models || word.searchResult.models.length === 0) {
+    if (word.words.length === 0) {
       this.subjectSearch$.next('');
     }
   }
@@ -109,12 +112,11 @@ class PageHome extends React.Component<Props, State> {
     this.setupWordItems(nextProps.word);
   }
 
-  setupWordItems = ({ searchResult }: IWordState) => {
-    const words: IWord[] = searchResult.models || [];
+  setupWordItems = ({ words }: WordState) => {
     if (words.length > 0) {
       // check if new words fetched
       const wKeyids = words.map(w => w.keyid);
-      const {wordItems} = this.state;
+      const { wordItems } = this.state;
       const sKeyids = wordItems.map(w => w.keyid);
       const isNewWords = wKeyids.length !== sKeyids.length
         || !wKeyids.reduce((prev, k) => prev && sKeyids.indexOf(k) > -1, true);
@@ -122,15 +124,16 @@ class PageHome extends React.Component<Props, State> {
         this.setState({wordItems: words});
       }
     }
-  };
+  }
 
   onSearchChange = (keyword: string) => {
     this.subjectSearch$.next(keyword);
-  };
+    this.setState({ keyword });
+  }
 
   render() {
     const { word, meaning, user, mUsage, mExample }: Props = this.props;
-    const { wordItems }: State = this.state;
+    const { keyword, wordItems }: State = this.state;
 
     const isWordEditable = user.auth_isLoggedIn && isAdminOrSuperAdmin(user.role);
     const currentWord = _.find(wordItems, {keyid: word.currentWordKeyid});
@@ -148,7 +151,7 @@ class PageHome extends React.Component<Props, State> {
         <CardExampleSentence
           word={currentWord.value.word}
           wordCustomUrl={currentWord.value.custom_url}
-          examples={termExample.examples.slice(0, 3)}
+          examples={termExample.examples.slice(0, sampleSentenceNumber)}
         />
       ) : undefined;
 
@@ -187,7 +190,7 @@ class PageHome extends React.Component<Props, State> {
               isSearching={word.isSearching}
               onChange={this.onSearchChange}
             />
-            <ListWord isEditable={isWordEditable} />
+            <ListWord keyword={keyword} isEditable={isWordEditable} />
           </Left>
           <Right>
             {wordInfo}
@@ -198,13 +201,13 @@ class PageHome extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: IStoreState) => ({
+const mapStateToProps = (state: StoreState) => ({
   word: state.word,
   pron: state.pron,
   meaning: state.meaning,
   user: state.user,
-  mUsage: state.meaning_usage,
-  mExample: state.meaning_usage_example,
+  mUsage: state.meaningUsage,
+  mExample: state.meaningExample,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
