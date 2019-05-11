@@ -180,7 +180,7 @@ const reducer: Reducer<WordState> = (state = initialState, action: AnyAction) =>
     case `${WORD__SEARCH}_DONE`:
       return {
         ...state,
-        words: _.uniq(_.concat(state.words, action.data.models)),
+        words: _.uniqBy(_.concat(state.words, action.data.models), 'keyid'),
         isSearching: false,
       };
     case `${WORD__SEARCH}_FAILED`:

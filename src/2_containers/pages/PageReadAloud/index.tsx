@@ -1,3 +1,4 @@
+import * as _ from 'lodash-es';
 import React, { ReactNode, RefObject } from 'react';
 import { Action, Dispatch } from 'redux';
 import { connect } from 'react-redux';
@@ -17,6 +18,7 @@ import ListSearchWord from '^/2_containers/components/ListSearchWord';
 import { actionSearchWord, WordState } from '^/3_store/ducks/word';
 import { fetchReadAloud } from '^/3_store/ducks/read_aloud';
 import { downloadRecordingAudio } from '^/4_services/file-service';
+import { isAlphanumericWord } from '^/4_services/word-service';
 
 import PageLayout from '../_PageLayout';
 
@@ -156,6 +158,8 @@ const DownloadBtn = styled(PlayBtn).attrs({
   }
 `;
 
+const delayWaveSurferLoad = 500;
+
 enum RecordStatus {
   Idle = 1,
   Ready,
@@ -177,6 +181,7 @@ interface State {
   sampleText: string;
   recognitionText: string;
   diffWords: Array<Diff.Change>;
+  missingWords: Array<string>;
 }
 class PageReadAloud extends React.Component<Props, State> {
   audioChunks: any[] = [];
@@ -211,25 +216,28 @@ class PageReadAloud extends React.Component<Props, State> {
       sampleText: '',
       recognitionText: '',
       diffWords: [],
+      missingWords: [],
     };
   }
 
   componentDidMount(): void {
-    this.waveSurfer = WaveSurfer.create({
-      container: this.waveSurferRef.current as HTMLTableCellElement,
-      waveColor: 'gray',
-      progressColor: 'black',
-      cursorColor: 'black',
-      barHeight: 1.3,
-      height: 60,
-      hideScrollbar: true,
-    });
-    this.waveSurfer.on('finish', () => {
-      if (this.waveSurfer) {
-        this.waveSurfer.stop();
-      }
-      this.setState({ isPlaying: false });
-    });
+    if (this.waveSurferRef.current && !this.waveSurfer) {
+      this.waveSurfer = WaveSurfer.create({
+        container: this.waveSurferRef.current,
+        waveColor: 'gray',
+        progressColor: 'black',
+        cursorColor: 'black',
+        barHeight: 1.3,
+        height: 60,
+        hideScrollbar: true,
+      });
+      this.waveSurfer.on('finish', () => {
+        if (this.waveSurfer) {
+          this.waveSurfer.stop();
+        }
+        this.setState({ isPlaying: false });
+      });
+    }
   }
 
   componentDidUpdate({ras: prevRas}: Readonly<Props>, {sampleText : prevText}: Readonly<State>): void {
@@ -252,12 +260,19 @@ class PageReadAloud extends React.Component<Props, State> {
     const diffWords = Diff.diffWords(this.state.sampleText, finalTranscript, { ignoreCase: true });
     const missingWords = diffWords
       .filter(word => word.removed)
+      .filter(word => isAlphanumericWord(word.value))
       .map(word => word.value);
 
-    this.props.searchWord(missingWords);
+    const availableWords = this.props.word.words.map(w => _.toLower(w.value.word));
+    const searchingWords = _.difference(missingWords.map(_.toLower), availableWords);
+    if (searchingWords.length > 0) {
+      this.props.searchWord(searchingWords);
+    }
+
     this.setState({
       recognitionText: capitalize(finalTranscript),
       diffWords,
+      missingWords,
     });
   }
 
@@ -271,9 +286,14 @@ class PageReadAloud extends React.Component<Props, State> {
       };
       this.mediaRecorder.onstop = () => {
         this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
-        if (this.waveSurfer) {
-          this.waveSurfer.load(URL.createObjectURL(this.audioBlob));
-        }
+        setTimeout(
+          () => {
+            if (this.audioBlob && this.waveSurfer) {
+              this.waveSurfer.loadBlob(this.audioBlob);
+            }
+          },
+          delayWaveSurferLoad,
+        );
       };
 
       this.mediaRecorder.start();
@@ -328,7 +348,8 @@ class PageReadAloud extends React.Component<Props, State> {
 
   render() {
     const {
-      recordStatus, isMicAvailable, isPlaying, sampleText, recognitionText, diffWords,
+      recordStatus, isMicAvailable, isPlaying,
+      sampleText, recognitionText, diffWords, missingWords,
     }: State = this.state;
 
     const isRecording: boolean = recordStatus === RecordStatus.Recording;
@@ -349,8 +370,7 @@ class PageReadAloud extends React.Component<Props, State> {
       <PageLayout>
         <Root>
           <Left>
-            <Title>Notice words</Title>
-            <ListSearchWord />
+            <ListSearchWord exactWords={missingWords} />
           </Left>
           <Right>
             <RightBody isMarginTop={!isRecordStopped}>
@@ -370,19 +390,18 @@ class PageReadAloud extends React.Component<Props, State> {
                   <DownloadBtn className={'fa fa-cloud-download'} onClick={this.downloadAudio} />
                   <WaveSurferTableWrapper>
                     <tbody>
-                    <tr>
-                      <WaveSurferContainer ref={this.waveSurferRef} />
-                      <WaveSurferControlCol>
-                        <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
-                      </WaveSurferControlCol>
-                    </tr>
+                      <tr>
+                        <WaveSurferContainer ref={this.waveSurferRef} />
+                        <WaveSurferControlCol>
+                          <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
+                        </WaveSurferControlCol>
+                      </tr>
                     </tbody>
                   </WaveSurferTableWrapper>
                   <RecognitionTextWrapper>
                     {recognitionText}
                   </RecognitionTextWrapper>
                   <DiffTextWrapper>
-                    <Title>Result:</Title>
                     {speechResult}
                   </DiffTextWrapper>
                 </RecognitionWrapper>

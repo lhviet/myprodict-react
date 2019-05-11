@@ -45,7 +45,7 @@ export default (props: Props) => {
   const [isReadOnly, setReadOnly] = useState(true);
   const text = props.value || '';
 
-  const matches = text.match(/\S+/g);
+  const matches = text.match(/\S+/ig);
   const wordNumber = matches ? matches.length : 0;
   const wordNumberLabel = `${wordNumber} word${wordNumber > 1 ? 's' : ''}`;
 

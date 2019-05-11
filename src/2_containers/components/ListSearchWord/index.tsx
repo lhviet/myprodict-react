@@ -36,6 +36,7 @@ interface Props {
   meanings: IMeaning[];
   usages: IMeaningUsage[];
   keyword?: string;
+  exactWords?: Array<string>;
   currentWordId?: string;
   limit?: number;
   isEditable?: boolean;
@@ -44,10 +45,23 @@ interface Props {
 }
 
 function ListSearchWord({
-  words, pronunciations, meanings, usages, keyword, currentWordId, isEditable, setCurrentWord, limit, className,
+  words, pronunciations, meanings, usages, keyword, exactWords,
+  currentWordId, isEditable, setCurrentWord, limit, className,
 }: Props) {
   const wordItems: ReactNode = words
-    .filter((word: IWord) => keyword ? word.value.word.startsWith(keyword) : true)
+    .filter(({ value }: IWord) => {
+      if (keyword) {
+        return _.toLower(value.word).startsWith(_.toLower(keyword));
+      }
+      return true;
+    })
+    .filter(({ value }: IWord) => {
+      if (exactWords && exactWords.length > 0) {
+        const requireWords = exactWords.map(_.toLower);
+        return requireWords.includes(_.toLower(value.word));
+      }
+      return true;
+    })
     .splice(0, limit || defaultLimit)
     .map((word: IWord) => {
       const predicate = {value: {word_keyid: word.keyid}};
@@ -55,7 +69,6 @@ function ListSearchWord({
       const usageNumber = _.filter(usages, predicate).length;
       const pronItems = _.filter(pronunciations, predicate) as Array<IPronunciation>;
       const isActive = currentWordId ? currentWordId === word.keyid : false;
-
       return (
         <Word
           key={word.keyid}

@@ -133,7 +133,7 @@ class Word extends React.Component<Props, State> {
 
   onClickSpeaker = (e: React.SyntheticEvent, word: string, local: string, transcript: IPronunciation) => {
     const url = transcript.value.sound_url ||
-      `https://ssl.gstatic.com/dictionary/static/sounds/20160317/${word}--_${local.toLowerCase()}_1.mp3`;
+      `https://ssl.gstatic.com/dictionary/static/sounds/20160317/${word}--_${_.toLower(local)}_1.mp3`;
     new Audio(url).play()
       .then(() => {
         this.setState({loadingAudio: undefined});
