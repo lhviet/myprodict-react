@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { colors, styles } from '^/theme';
+
+import { countWord } from '^/4_services/word-service';
 
 const wordCountAlpha = 0.8;
 const colorAlpha = 0.9;
@@ -45,8 +47,7 @@ export default (props: Props) => {
   const [isReadOnly, setReadOnly] = useState(true);
   const text = props.value || '';
 
-  const matches = text.match(/\S+/ig);
-  const wordNumber = matches ? matches.length : 0;
+  const wordNumber = countWord(text);
   const wordNumberLabel = `${wordNumber} word${wordNumber > 1 ? 's' : ''}`;
 
   const onClick = () => setReadOnly(false);

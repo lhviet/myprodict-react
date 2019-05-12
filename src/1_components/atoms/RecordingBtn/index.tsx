@@ -40,68 +40,76 @@ const Icon = styled.i`
 `;
 
 const defaultCountdown = 3;
-// tslint:disable-next-line:no-magic-numbers
-const numbers$ = interval(1000);
+const intervalMilliseconds = 1000;
+const count$ = interval(intervalMilliseconds);
 const cancel$ = new Subject();
-cancel$.pipe(takeUntil(cancel$));
-
 const makeReadyLabel = (sum: number, countNum: number): string => {
   const dots = _.join(_.times(sum - countNum, () => '..'), '');
   return `${dots}${countNum}`;
 };
 
 enum MicStatus {
-  Stop = 'Stop',
   Start = 'Start',
   NoMic = 'No Mic',
 }
 interface Props {
-  isMicAvailable: boolean;
-  isRecording?: boolean;
+  isMic: boolean;
+  isRecording: boolean;
   countdown?: number;
   className?: string;
   onClick(isCountingdown?: boolean): void;
 }
-export default ({ isMicAvailable, isRecording, countdown, className, onClick }: Props) => {
+export default ({ isMic, isRecording, countdown, className, onClick }: Props) => {
   const [currentCountdown, setCountdown] = useState(-1);
+  const [currentCountup, setCountup] = useState(0);
 
-  let theCountdown = countdown || defaultCountdown;
-  let recordingLabel: string = isMicAvailable ? MicStatus.Start : MicStatus.NoMic;
+  const theCountdown: number = countdown === undefined ? defaultCountdown : countdown;
+  let recordingLabel: string = isMic ? MicStatus.Start : MicStatus.NoMic;
   if (theCountdown && currentCountdown > 0) {
     recordingLabel = makeReadyLabel(theCountdown, currentCountdown);
   } else if (isRecording) {
-    recordingLabel = MicStatus.Stop;
+    recordingLabel = currentCountup.toString();
   }
 
-  const iconMicClassName = isMicAvailable ? 'fa-microphone' : 'fa-microphone-slash';
+  const iconMicClassName = isMic ? 'fa-microphone' : 'fa-microphone-slash';
   const iconRecordingClassName = isRecording ? 'fa-microphone an-pulse-btn' : iconMicClassName;
   const iconClassName = `fa ${iconRecordingClassName} ${className}`;
 
+  const startRecording = () => {
+    onClick();
+    count$.pipe(
+      takeUntil(cancel$),
+    ).subscribe(x => {
+      setCountup(x + 1);
+    });
+  };
   const handleButtonClick = () => {
-    onClick(!!theCountdown);
     if (isRecording) {
       onClick();
+      setCountup(0);
+      cancel$.next();
       return;
     }
-    if (theCountdown) {
+    if (theCountdown > 0) {
+      onClick(true);
       setCountdown(currentCountdown < 0 ? theCountdown : -1);
       if (currentCountdown > -1) {
         cancel$.next();
         return;
       }
       const countdownFrom = theCountdown - 1;
-      numbers$.pipe(
+      count$.pipe(
         take(theCountdown),
         takeUntil(cancel$),
       ).subscribe(x => {
         setCountdown(countdownFrom - x);
         if (x === countdownFrom) {
-          onClick();
+          startRecording();
           setCountdown(-1);
         }
       });
     } else {
-      onClick();
+      startRecording();
     }
   };
 
