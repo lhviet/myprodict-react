@@ -1,3 +1,4 @@
+import * as _ from 'lodash-es';
 import React, { RefObject } from 'react';
 import styled from 'styled-components';
 import WaveSurfer from 'wavesurfer.js';
@@ -22,7 +23,7 @@ const Table = styled.table`
 `;
 const WaveSurferControlCol = styled.td`
   width: 1.5rem;
-  text-align: right;
+  text-align: center;
 `;
 const WaveSurferContainer = styled.td`
   width: auto;
@@ -38,6 +39,11 @@ const PlayBtn = styled.i.attrs({
     color: ${colors.green.toString()};
   }
 `;
+const PlayInfo = styled.div`
+  font-size: .8rem;
+  line-height: 1.3rem;
+  color: ${colors.grey.alpha(alpha8).toString()};
+`;
 
 interface Props {
   hidden?: boolean;
@@ -46,8 +52,8 @@ interface Props {
 }
 interface State {
   isPlaying: boolean;
+  currentTime: number;
 }
-
 class WaveSurferItem extends React.Component<Props, State> {
   ref: RefObject<HTMLTableCellElement>;
   waveSurfer: WaveSurfer | undefined;
@@ -58,7 +64,19 @@ class WaveSurferItem extends React.Component<Props, State> {
 
     this.state = {
       isPlaying: false,
+      currentTime: 0,
     };
+  }
+
+  loadAudio() {
+    const { audio } = this.props;
+    if (this.waveSurfer && audio) {
+      if (typeof audio === 'string') {
+        this.waveSurfer.load(audio);
+      } else {
+        this.waveSurfer.loadBlob(audio);
+      }
+    }
   }
 
   componentDidMount(): void {
@@ -78,18 +96,15 @@ class WaveSurferItem extends React.Component<Props, State> {
         }
         this.setState({ isPlaying: false });
       });
+      this.waveSurfer.on('audioprocess', () => {
+        this.setState({ currentTime: this.waveSurfer ? this.waveSurfer.getCurrentTime() : 0 });
+      });
+      this.loadAudio();
     }
   }
 
   componentDidUpdate({ audio: prevAudio }: Readonly<Props>): void {
-    const { audio }: Props = this.props;
-    if (this.waveSurfer && audio && prevAudio !== audio) {
-      if (typeof audio === 'string') {
-        this.waveSurfer.load(audio);
-      } else {
-        this.waveSurfer.loadBlob(audio);
-      }
-    }
+    this.loadAudio();
   }
 
   playPauseWaveSurfer = () => {
@@ -101,8 +116,12 @@ class WaveSurferItem extends React.Component<Props, State> {
 
   render() {
     const { hidden, audio } = this.props;
-    const { isPlaying } = this.state;
+    const { isPlaying, currentTime } = this.state;
     const waveIconClassName = `fa ${isPlaying ? 'fa-pause' : 'fa-play'}`;
+
+    const precision = 1;
+    let current = _.round(currentTime, precision);
+    let duration = this.waveSurfer ? _.round(this.waveSurfer.getDuration(), precision) : 0.00;
 
     return (
       <Root isDisplay={!hidden && !!audio}>
@@ -110,6 +129,10 @@ class WaveSurferItem extends React.Component<Props, State> {
           <tbody>
             <tr>
               <WaveSurferContainer ref={this.ref} />
+              <WaveSurferControlCol>
+                <PlayInfo>{current}s</PlayInfo>
+                <PlayInfo>{duration}s</PlayInfo>
+              </WaveSurferControlCol>
               <WaveSurferControlCol>
                 <PlayBtn className={waveIconClassName} onClick={this.playPauseWaveSurfer}/>
               </WaveSurferControlCol>

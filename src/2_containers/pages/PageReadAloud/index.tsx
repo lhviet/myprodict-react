@@ -10,22 +10,18 @@ import { IReadAloud } from 'myprodict-model/lib-esm';
 import { StoreState } from '^/types';
 import { colors, styles } from '^/theme';
 
-import LoadingIconRaw from '^/1_components/atoms/LoadingIcon';
 import FocusEditTextArea from '^/1_components/atoms/FocusEditTextArea';
 import RecordingBtn from '^/1_components/atoms/RecordingBtn';
 import WaveSurferItem from '^/1_components/atoms/WaveSurferItem';
+import SpeechDiffResultRaw, { Props as SpeechDiffResultProps } from '^/1_components/molecules/SpeechDiffResult';
 import ListSearchWord from '^/2_containers/components/ListSearchWord';
 import { actionSearchWord, WordState } from '^/3_store/ducks/word';
 import { fetchReadAloud } from '^/3_store/ducks/read_aloud';
-import { downloadRecordingAudio } from '^/4_services/file-service';
-import { countWord, getWords, isAlphanumericWord } from '^/4_services/word-service';
-import { getPercentage } from '^/4_services/calc-service';
+import { getWords, getMissingWords } from '^/4_services/word-service';
 
 import PageLayout from '../_PageLayout';
 
-const alpha6 = 0.6;
-const alpha8 = 0.8;
-const alpha9 = 0.9;
+const alpha7 = .7;
 const Root = styled.div`
   position: relative;
   display: flex;
@@ -72,90 +68,32 @@ const TextAreaWrapper = styled.div`
 `;
 const RecordingBtnWrapper = styled.div`
   text-align: center;
-`;
-const Title = styled.div`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${colors.dark.alpha(alpha8).toString()};
-  margin-bottom: .3rem;
-`;
-const CorrectPercentage = styled.span`
-  font-size: 1rem;
-  font-weight: 700;
-  color: ${colors.red.alpha(alpha6).toString()};
+  margin-top: 1rem;
 `;
 
 interface DisplayProps {
   isDisplay?: boolean;
 }
-const LoadingIcon = styled(LoadingIconRaw)<DisplayProps>`
-  margin: 0 auto;
-  align-self: center;
-  transition: display ease-in .2s;
-  display: ${props => !props.isDisplay && 'none'};
-`;
-const SpeechResult = styled.div<DisplayProps>`
-  position: relative;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  padding: .75rem;
-  min-height: 250px;
+const SpeechDiffResult = styled(SpeechDiffResultRaw)<DisplayProps>`
   border-radius: 5px;
   background-color: #fff;
   transition: transform ease .2s, min-height ease .2s;
-  transform: ${props => props.isDisplay ? 'translateY(0)' : 'translateY(200%)'};
+  transform: ${props => props.isDisplay ? 'translateY(0)' : 'translateY(-100%)'};
   display: ${props => props.isDisplay ? 'flex' : 'none'};
 `;
-const RecognitionWrapper = styled.div<DisplayProps>`
-  transition: display ease .2s, min-height ease .2s;
-  display: ${props => props.isDisplay ? 'block' : 'none'};
+const SpeechDiffResultListItem = styled(SpeechDiffResultRaw)`
+  border-bottom: solid 1px ${colors.borderGray.alpha(alpha7).toString()};
+  margin-top: 0;
+  margin-bottom: 0;
 `;
-const RecognitionTextWrapper = styled.div`
-  color: ${colors.dark.alpha(alpha9).toString()};
-`;
-const DiffTextWrapper = styled.div`
+const SpeechDiffList = styled.div<DisplayProps>`
   margin-top: 1rem;
-  font-size: 1.1rem;
   border-radius: 5px;
   background-color: #fff;
+  transition: transform ease .2s, min-height ease .2s;
+  transform: ${props => props.isDisplay ? 'translateY(0)' : 'translateY(-100%)'};
+  display: ${props => props.isDisplay ? 'block' : 'none'};
 `;
-const DiffTextCorrect = styled.span`
-  color: ${colors.blue.toString()};
-`;
-const DiffTextMissed = styled.span`
-  color: ${colors.red.toString()};
-`;
-const DiffTextAdded = styled.span`
-  color: ${colors.grey.toString()};
-  text-decoration: line-through;
-  margin-left: .2rem;
-`;
-const PlayBtn = styled.i.attrs({
-  title: 'Play/Pause'
-})`
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: ${colors.grey.alpha(alpha8).toString()};
-  
-  :hover {
-    color: ${colors.green.toString()};
-  }
-`;
-const DownloadBtn = styled(PlayBtn).attrs({
-  title: 'Download'
-})`
-  position: absolute;
-  top: .5rem;
-  right: .6rem;
-  font-size: 1.1rem;
-  color: ${colors.grey.alpha(alpha6).toString()};
-  :hover {
-    color: ${colors.grey.toString()};
-  }
-`;
-
-const countCorrectWord = (diffWords: Array<Diff.Change>): number =>
-  _.reduce(diffWords, (sum, w) => w.added || w.removed ? sum : sum + countWord(w.value), 0);
 
 enum RecordStatus {
   Idle = 1,
@@ -173,16 +111,16 @@ interface Props {
 interface State {
   recordStatus: RecordStatus;
   isMicAvailable: boolean;
-  isTextAreaFocus: boolean;
-  sampleText: string;
-  recognitionText: string;
-  recordAudioBlob?: Blob;
+
   ra?: IReadAloud;
-  diffWords: Array<Diff.Change>;
+  sampleText: string;
   missingWords: Array<string>;
+
+  attempts: Array<SpeechDiffResultProps>;
 }
 class PageReadAloud extends React.Component<Props, State> {
   audioChunks: any[] = [];
+  audioBlob: Blob | undefined;
   mediaRecorder: MediaRecorder | undefined;
   speechRecognition: SpeechRecognition | undefined;
 
@@ -204,18 +142,16 @@ class PageReadAloud extends React.Component<Props, State> {
     this.state = {
       recordStatus: RecordStatus.Idle,
       isMicAvailable: true,
-      isTextAreaFocus: false,
       sampleText: '',
-      recognitionText: '',
-      diffWords: [],
       missingWords: [],
+      attempts: [],
     };
   }
 
   componentDidUpdate({ras: prevRas}: Readonly<Props>, {sampleText : prevText}: Readonly<State>): void {
     const { ras }: Props = this.props;
     if (prevRas.length === 0 && ras.length > 0 && prevText.length === 0) {
-      const { ra_content: sampleText, audio_url } = ras[0].value;
+      const { ra_content: sampleText } = ras[0].value;
       const keyWords = getWords(sampleText);
       if (keyWords.length > 0) {
         const keywordLength = 4;
@@ -230,6 +166,8 @@ class PageReadAloud extends React.Component<Props, State> {
   }
 
   onRecognitionResult = (event: SpeechRecognitionEvent) => {
+    const { sampleText }: State = this.state;
+
     let finalTranscript = '';
     let interimTranscript = '';
     for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -239,21 +177,26 @@ class PageReadAloud extends React.Component<Props, State> {
         interimTranscript += event.results[i][0].transcript;
       }
     }
-    const diffWords = Diff.diffWords(this.state.sampleText, finalTranscript, { ignoreCase: true });
-    const missingWords = diffWords
-      .filter(word => word.removed)
-      .filter(word => isAlphanumericWord(word.value))
-      .map(word => word.value);
+    const diffWords = Diff.diffWords(sampleText, finalTranscript, { ignoreCase: true });
+    const missingWords = getMissingWords(diffWords);
 
     const availableWords = this.props.word.words.map(w => _.toLower(w.value.word));
-    const searchingWords = _.difference(missingWords.map(_.toLower), availableWords);
-    if (searchingWords.length > 0) {
-      this.props.searchWord(searchingWords);
+    const needToSearchWords = _.difference(missingWords.map(_.toLower), availableWords);
+    if (needToSearchWords.length > 0) {
+      this.props.searchWord(needToSearchWords);
     }
 
+    const attempts = [
+      {
+        datetime: new Date(),
+        sampleText,
+        recognitionText: capitalize(finalTranscript),
+        recordAudioBlob: this.audioBlob,
+      },
+      ...this.state.attempts,
+    ];
     this.setState({
-      recognitionText: capitalize(finalTranscript),
-      diffWords,
+      attempts,
       missingWords,
     });
   }
@@ -265,18 +208,10 @@ class PageReadAloud extends React.Component<Props, State> {
       this.mediaRecorder.ondataavailable = (event: BlobEvent) => this.audioChunks.push(event.data);
       this.mediaRecorder.onstart = () => {
         this.audioChunks = [];
+        this.audioBlob = undefined;
       };
       this.mediaRecorder.onstop = () => {
-        const delayWaveSurferLoad = 500;
-        const recordAudioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
-        setTimeout(
-          () => {
-            this.setState({
-              recordAudioBlob,
-            });
-          },
-          delayWaveSurferLoad,
-        );
+        this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
       };
 
       this.mediaRecorder.start();
@@ -322,37 +257,38 @@ class PageReadAloud extends React.Component<Props, State> {
 
   render() {
     const {
-      recordStatus, isMicAvailable, recordAudioBlob, ra,
-      sampleText, recognitionText, diffWords, missingWords,
+      recordStatus, isMicAvailable, ra, sampleText, missingWords, attempts,
     }: State = this.state;
 
     const isRecording: boolean = recordStatus === RecordStatus.Recording;
     const isRecordStopped: boolean = recordStatus === RecordStatus.Stopped;
 
-    const correctCount = countCorrectWord(diffWords);
-    const totalCount = countWord(sampleText);
-    const correctPercent = getPercentage(correctCount, totalCount);
-    const correctTitle: ReactNode = (
-      <Title>
-        Correct: {correctCount}/{totalCount} words
-        <CorrectPercentage>
-          ({correctPercent}%)
-        </CorrectPercentage>
-      </Title>
-    );
+    const lastAttempt = _.first(attempts);
+    const remainAttempts = attempts.length > 1 ? attempts.slice(1) : [];
+    const lastAttemptNode: ReactNode = lastAttempt ? (
+      <SpeechDiffResult
+        isDisplay={isRecordStopped}
+        {...lastAttempt}
+        order={1}
+      />
+    ) : undefined;
+    const attemptListItems: ReactNode = remainAttempts.map((attempt, index) => {
+      const orderFrom = 2;
+      const order = orderFrom + index;
 
-    const onDownload = () => this.state.recordAudioBlob &&
-      downloadRecordingAudio(this.state.recordAudioBlob, correctPercent);
-
-    const speechResult: ReactNode = diffWords.map(({ value, added, removed }, index) => {
-      return added ? (
-        <DiffTextAdded key={index}>{value}</DiffTextAdded>
-      ) : (removed ? (
-        <DiffTextMissed key={index}>{value}</DiffTextMissed>
-      ) : (
-        <DiffTextCorrect key={index}>{value}</DiffTextCorrect>
-      ));
+      return (
+        <SpeechDiffResultListItem
+          key={index}
+          {...attempt}
+          order={order}
+        />
+      );
     });
+    const attemptList: ReactNode = remainAttempts.length > 0 ? (
+      <SpeechDiffList isDisplay={isRecordStopped}>
+        {attemptListItems}
+      </SpeechDiffList>
+    ) : undefined;
 
     return (
       <PageLayout>
@@ -364,6 +300,7 @@ class PageReadAloud extends React.Component<Props, State> {
             <RightBody isMarginTop={!isRecordStopped}>
               <TextAreaWrapper>
                 <FocusEditTextArea value={sampleText} onBlur={this.handleTextBlur} />
+                <WaveSurferItem hidden={!isRecordStopped} audio={ra ? ra.value.audio_url : undefined} />
                 <RecordingBtnWrapper>
                   <RecordingBtn
                     isRecording={isRecording}
@@ -371,23 +308,9 @@ class PageReadAloud extends React.Component<Props, State> {
                     onClick={this.handleRecordingClick}
                   />
                 </RecordingBtnWrapper>
-                <WaveSurferItem hidden={!isRecordStopped} audio={ra ? ra.value.audio_url : undefined} />
               </TextAreaWrapper>
-              <SpeechResult isDisplay={isRecordStopped}>
-                <RecognitionWrapper isDisplay={recognitionText.length > 0}>
-                  <Title>Your Speech:</Title>
-                  <DownloadBtn className={'fa fa-cloud-download'} onClick={onDownload} />
-                  <WaveSurferItem audio={recordAudioBlob} />
-                  <RecognitionTextWrapper>
-                    {recognitionText}
-                  </RecognitionTextWrapper>
-                  <DiffTextWrapper>
-                    {correctTitle}
-                    {speechResult}
-                  </DiffTextWrapper>
-                </RecognitionWrapper>
-                <LoadingIcon isDisplay={recognitionText.length === 0} />
-              </SpeechResult>
+              {lastAttemptNode}
+              {attemptList}
             </RightBody>
           </Right>
         </Root>

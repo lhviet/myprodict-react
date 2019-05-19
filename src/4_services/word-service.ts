@@ -1,6 +1,17 @@
-export function isAlphanumericWord(word: string): boolean {
-  const matches = word.match(/[\w-]+/ig);
-  return !!matches && matches.length === 1;
+import * as Diff from 'diff';
+import * as _ from 'lodash-es';
+
+export function getAlphanumericWords(word: string): Array<string> {
+  return word.match(/[\w-]+/ig) || [];
+}
+export function  getMissingWords(diffWords: Array<Diff.Change>): Array<string> {
+  return _.uniq(
+    diffWords
+      .filter(word => word.removed)
+      .map(word => getAlphanumericWords(word.value).join(','))
+      .join(',')
+      .split(',')
+  );
 }
 export function countWord(phrase: string): number {
   const matches = phrase.match(/\S+/ig);
