@@ -48,6 +48,7 @@ function ListSearchWord({
   words, pronunciations, meanings, usages, keyword, exactWords,
   currentWordId, isEditable, setCurrentWord, limit, className,
 }: Props) {
+  const exactLowerWords: Array<string> = exactWords ? exactWords.map(_.toLower) : [];
   const wordItems: ReactNode = words
     .filter(({ value }: IWord) => {
       if (keyword) {
@@ -55,13 +56,12 @@ function ListSearchWord({
       }
       return true;
     })
-    .filter(({ value }: IWord) => {
-      if (exactWords && exactWords.length > 0) {
-        const requireWords = exactWords.map(_.toLower);
-        return requireWords.includes(_.toLower(value.word));
-      }
-      return true;
-    })
+    .filter(({ value }: IWord) =>
+      exactLowerWords.length > 0 ? exactLowerWords
+        .map(_.toLower)
+        .includes(_.toLower(value.word)) : true)
+    .sort((a, b) =>
+      exactLowerWords.indexOf(_.toLower(a.value.word)) - exactLowerWords.indexOf(_.toLower(b.value.word)))
     .splice(0, limit || defaultLimit)
     .map((word: IWord) => {
       const predicate = {value: {word_keyid: word.keyid}};

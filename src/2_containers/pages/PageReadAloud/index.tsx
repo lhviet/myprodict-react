@@ -204,14 +204,17 @@ class PageReadAloud extends React.Component<Props, State> {
   startRecording = async () => {
     try {
       const stream: MediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
-      this.mediaRecorder = new MediaRecorder(stream);
+      const option = {
+        mimeType : 'audio/webm'
+      };
+      this.mediaRecorder = new MediaRecorder(stream, option);
       this.mediaRecorder.ondataavailable = (event: BlobEvent) => this.audioChunks.push(event.data);
       this.mediaRecorder.onstart = () => {
         this.audioChunks = [];
         this.audioBlob = undefined;
       };
       this.mediaRecorder.onstop = () => {
-        this.audioBlob = new Blob(this.audioChunks, {type: 'audio/mpeg-3'});
+        this.audioBlob = new Blob(this.audioChunks, {type: 'audio/webm; codecs=opus'});
       };
 
       this.mediaRecorder.start();
@@ -290,6 +293,8 @@ class PageReadAloud extends React.Component<Props, State> {
       </SpeechDiffList>
     ) : undefined;
 
+    const isFirstRecord = attempts.length === 0;
+
     return (
       <PageLayout>
         <Root>
@@ -303,6 +308,7 @@ class PageReadAloud extends React.Component<Props, State> {
                 <WaveSurferItem hidden={!isRecordStopped} audio={ra ? ra.value.audio_url : undefined} />
                 <RecordingBtnWrapper>
                   <RecordingBtn
+                    isFirstRecord={isFirstRecord}
                     isRecording={isRecording}
                     isMic={isMicAvailable}
                     onClick={this.handleRecordingClick}

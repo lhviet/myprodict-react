@@ -26,11 +26,11 @@ const Root = styled.div`
   padding: .75rem;
   min-height: 250px;
 `;
-const TimeLabel = styled.div`
+const TimeLabel = styled.span`
   font-size: .9rem;
   font-weight: 300;
   color: ${colors.blueDark.alpha(alpha8).toString()};
-  margin-bottom: .3rem;
+  margin: 0 .3rem .3rem;
 `;
 const Title = styled.div`
   font-size: 1rem;

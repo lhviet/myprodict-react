@@ -68,17 +68,6 @@ class WaveSurferItem extends React.Component<Props, State> {
     };
   }
 
-  loadAudio() {
-    const { audio } = this.props;
-    if (this.waveSurfer && audio) {
-      if (typeof audio === 'string') {
-        this.waveSurfer.load(audio);
-      } else {
-        this.waveSurfer.loadBlob(audio);
-      }
-    }
-  }
-
   componentDidMount(): void {
     if (this.ref.current && !this.waveSurfer) {
       this.waveSurfer = WaveSurfer.create({
@@ -104,7 +93,31 @@ class WaveSurferItem extends React.Component<Props, State> {
   }
 
   componentDidUpdate({ audio: prevAudio }: Readonly<Props>): void {
-    this.loadAudio();
+    const { audio }: Props = this.props;
+    const prevAudioType: string = typeof prevAudio;
+    const audioType: string = typeof audio;
+    if (prevAudioType !== audioType) {
+      this.loadAudio();
+    } else if (audio && prevAudio) {
+      if (audioType === 'string') {
+        if (audio !== prevAudio) {
+          this.loadAudio();
+        }
+      } else if ((audio as Blob).size !== (prevAudio as Blob).size) {
+        this.loadAudio();
+      }
+    }
+  }
+
+  loadAudio() {
+    const { audio } = this.props;
+    if (this.waveSurfer && audio) {
+      if (typeof audio === 'string') {
+        this.waveSurfer.load(audio);
+      } else {
+        this.waveSurfer.loadBlob(audio);
+      }
+    }
   }
 
   playPauseWaveSurfer = () => {

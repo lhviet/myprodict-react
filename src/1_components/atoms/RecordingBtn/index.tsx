@@ -12,7 +12,7 @@ interface RootProps {
 const Root = styled.button<RootProps>`
   ${styles.primaryOutlineBtn};
   position: relative;
-  width: 6.6rem;
+  width: 7.6rem;
   font-size: 1.1rem;
   line-height: 1.2;
   padding: .45rem .35rem .375rem .75rem;
@@ -50,21 +50,25 @@ const makeReadyLabel = (sum: number, countNum: number): string => {
 
 enum MicStatus {
   Start = 'Start',
+  TryAgain = 'Try Again',
   NoMic = 'No Mic',
 }
 interface Props {
   isMic: boolean;
+  isFirstRecord: boolean;
   isRecording: boolean;
   countdown?: number;
   className?: string;
   onClick(isCountingdown?: boolean): void;
 }
-export default ({ isMic, isRecording, countdown, className, onClick }: Props) => {
+export default ({ isMic, isFirstRecord, isRecording, countdown, className, onClick }: Props) => {
   const [currentCountdown, setCountdown] = useState(-1);
   const [currentCountup, setCountup] = useState(0);
 
   const theCountdown: number = countdown === undefined ? defaultCountdown : countdown;
-  let recordingLabel: string = isMic ? MicStatus.Start : MicStatus.NoMic;
+  let recordingLabel: string = isMic ? (
+    isFirstRecord ? MicStatus.Start : MicStatus.TryAgain
+  ) : MicStatus.NoMic;
   if (theCountdown && currentCountdown > 0) {
     recordingLabel = makeReadyLabel(theCountdown, currentCountdown);
   } else if (isRecording) {
