@@ -1,10 +1,10 @@
-import React, {ReactNode, useState} from 'react';
+import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
 import {
   getEWordClassString, IMeaning, IMeaningExample, IMeaningUsage, MPTypes,
 } from 'myprodict-model/lib-esm';
 
-import {alpha, colors} from '^/theme';
+import { alpha, colors } from '^/theme';
 import * as _ from 'lodash-es';
 
 import CardMeaningRaw from '^/1_components/atoms/CardMeaning';
@@ -21,7 +21,7 @@ const Root = styled.div`
   background-clip: border-box;
   background-color: #fff;
 `;
-const Head = styled.div`
+const HeadWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   padding: .6rem .5rem;
@@ -58,7 +58,9 @@ const MeaningTitle = styled.span`
   color: ${colors.blue.alpha(alpha.alpha9).toString()};
 `;
 const CardMeaning = styled(CardMeaningRaw)`
-  margin: .5rem 0;
+  padding: .5rem 0 .75rem 1rem;
+  margin-bottom: .75rem;
+  border-bottom: 1px dotted ${colors.borderGray.alpha(alpha.alpha5).toString()};
 `;
 const ButtonExpandItem = styled(ButtonExpand)`
   float: right;
@@ -131,7 +133,7 @@ export default ({ meanings, usages, examples, className }: Props) => {
 
   return (
     <Root className={className}>
-      <Head>
+      <HeadWrapper>
         <div>
           Meaning - {meanings.length}
         </div>
@@ -141,7 +143,7 @@ export default ({ meanings, usages, examples, className }: Props) => {
           isExpanded={isExpandedAll}
           onClick={onExpandCollapseAll}
         />
-      </Head>
+      </HeadWrapper>
       <BodyList>
         {listItems}
       </BodyList>

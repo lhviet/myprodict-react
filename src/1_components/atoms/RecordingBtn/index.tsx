@@ -4,7 +4,7 @@ import { interval, Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
 import * as _ from 'lodash-es';
 
-import {alpha, colors, styles} from '^/theme';
+import { alpha, colors, styles } from '^/theme';
 
 interface RootProps {
   isRecording?: boolean;

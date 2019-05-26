@@ -6,7 +6,7 @@ import { getEWordClassString, getLocalString, IPronunciation, IWord, MPTypes } f
 
 import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
-import {alpha, colors} from '^/theme';
+import { alpha, colors } from '^/theme';
 
 interface RootProps {
   isActive?: boolean;
@@ -129,7 +129,7 @@ class Word extends React.Component<Props, State> {
     if (prons && prons.length > 0) {
       this.setState({pSystems: _.uniq(prons.map(p => p.value.system))});
     }
-  };
+  }
 
   onClickSpeaker = (e: React.SyntheticEvent, word: string, local: string, transcript: IPronunciation) => {
     const url = transcript.value.sound_url ||
@@ -141,16 +141,15 @@ class Word extends React.Component<Props, State> {
       .catch(err => {
         const msg = new SpeechSynthesisUtterance();
         const voices = window.speechSynthesis.getVoices();
-        const voice = voices.find(theVoice => theVoice.lang === `en-${local.toUpperCase()}`) || voices[0];
         // console.error('voice = ', voice);
-        msg.voice = voice;
+        msg.voice = voices.find(theVoice => theVoice.lang === `en-${local.toUpperCase()}`) || voices[0];
         msg.text = word;
         speechSynthesis.speak(msg);
         this.setState({loadingAudio: undefined});
       });
     this.setState({loadingAudio: transcript.keyid});
     e.stopPropagation();  // cancel its parent's onClick function
-  };
+  }
 
   render() {
     const { word, prons, isActive, meaningNumber, usageNumber, isEditable, onSelectWord, link } = this.props;
@@ -160,7 +159,6 @@ class Word extends React.Component<Props, State> {
       if (onSelectWord) {
         onSelectWord(word.keyid, word.value.word);
       }
-      console.log('link = ', link);
     };
     const sProns = prons.filter(p => p.value.system === selectedSystem) || [];
     const locals = _.uniq(sProns.map(p => p.value.local)).sort();

@@ -3,16 +3,12 @@ import { getEWordClassString, IMeaningExample, IMeaningUsage } from 'myprodict-m
 import * as _ from 'lodash-es';
 import styled from 'styled-components';
 
-import { alpha, colors } from '^/theme';
-
 const Root = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 4.5rem;
   word-wrap: break-word;
-  border: 1px solid ${colors.borderGray.alpha(alpha.alpha5).toString()};
-  border-radius: 3px;
   background-clip: border-box;
   background-color: #fff;
 `;

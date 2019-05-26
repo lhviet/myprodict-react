@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 
-import {alpha, colors} from '^/theme';
+import { alpha, colors } from '^/theme';
 import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
 const Root = styled.div`

@@ -3,9 +3,8 @@ import React, { RefObject } from 'react';
 import styled from 'styled-components';
 import WaveSurfer from 'wavesurfer.js';
 
-import {alpha, colors} from '^/theme';
+import { alpha, colors } from '^/theme';
 
-const alpha8 = .8;
 const waveSurferHeight = 60;
 
 interface RootProps {
