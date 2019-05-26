@@ -4,7 +4,7 @@ import { interval, Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
 import * as _ from 'lodash-es';
 
-import { colors, styles } from '^/theme';
+import {alpha, colors, styles} from '^/theme';
 
 interface RootProps {
   isRecording?: boolean;
@@ -18,8 +18,8 @@ const Root = styled.button<RootProps>`
   padding: .45rem .35rem .375rem .75rem;
   text-align: left;
   
-  border-color: ${({ isRecording }) => isRecording && colors.grey.alpha(.5).toString()};
-  color: ${({ isRecording }) => isRecording && colors.grey.alpha(.7).toString()};
+  border-color: ${({ isRecording }) => isRecording && colors.grey.alpha(alpha.alpha5).toString()};
+  color: ${({ isRecording }) => isRecording && colors.grey.alpha(alpha.alpha7).toString()};
   
   i {
     color: ${({ isRecording }) => isRecording && '#fff'};

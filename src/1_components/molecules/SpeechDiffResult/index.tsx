@@ -4,7 +4,7 @@ import * as Diff from 'diff';
 import * as _ from 'lodash-es';
 import moment from 'moment';
 
-import { colors } from '^/theme';
+import { alpha, colors } from '^/theme';
 
 import LoadingIconRaw from '^/1_components/atoms/LoadingIcon';
 import WaveSurferItem from '^/1_components/atoms/WaveSurferItem';
@@ -12,9 +12,6 @@ import { countWord, getMissingWords } from '^/4_services/word-service';
 import { getPercentage } from '^/4_services/calc-service';
 import { downloadRecordingAudio } from '^/4_services/file-service';
 
-const alpha6 = 0.6;
-const alpha8 = 0.8;
-const alpha9 = 0.9;
 interface DisplayProps {
   isDisplay?: boolean;
 }
@@ -29,19 +26,19 @@ const Root = styled.div`
 const TimeLabel = styled.span`
   font-size: .9rem;
   font-weight: 300;
-  color: ${colors.blueDark.alpha(alpha8).toString()};
+  color: ${colors.blueDark.alpha(alpha.alpha8).toString()};
   margin: 0 .3rem .3rem;
 `;
 const Title = styled.div`
   font-size: 1rem;
   font-weight: 600;
-  color: ${colors.dark.alpha(alpha8).toString()};
+  color: ${colors.dark.alpha(alpha.alpha8).toString()};
   margin-bottom: .3rem;
 `;
 const CorrectPercentage = styled.span`
   font-size: 1rem;
   font-weight: 700;
-  color: ${colors.red.alpha(alpha6).toString()};
+  color: ${colors.red.alpha(alpha.alpha6).toString()};
 `;
 const RecognitionWrapper = styled.div<DisplayProps>`
   width: 100%;
@@ -49,7 +46,7 @@ const RecognitionWrapper = styled.div<DisplayProps>`
   transition: height ease .1s;
 `;
 const RecognitionTextWrapper = styled.div`
-  color: ${colors.dark.alpha(alpha9).toString()};
+  color: ${colors.dark.alpha(alpha.alpha9).toString()};
 `;
 const DiffTextWrapper = styled.div`
   margin-top: 1rem;
@@ -73,7 +70,7 @@ const DownloadBtn = styled.i.attrs({
   top: .5rem;
   right: .6rem;
   font-size: 1.1rem;
-  color: ${colors.grey.alpha(alpha6).toString()};
+  color: ${colors.grey.alpha(alpha.alpha6).toString()};
   cursor: pointer;
   
   :hover {
@@ -83,12 +80,12 @@ const DownloadBtn = styled.i.attrs({
 const MissingWordTitle = styled.div`
   margin-top: .5rem;
   font-size: .9rem;
-  color: ${colors.grey.alpha(alpha9).toString()};
+  color: ${colors.grey.alpha(alpha.alpha9).toString()};
 `;
 const MissingWords = styled.div`
   margin-top: .2rem;
   font-size: .9rem;
-  color: ${colors.grey.alpha(alpha6).toString()};
+  color: ${colors.grey.alpha(alpha.alpha6).toString()};
 `;
 const LoadingIcon = styled(LoadingIconRaw)<DisplayProps>`
   margin: 0 auto;
@@ -113,7 +110,9 @@ export default ({ datetime, sampleText, recognitionText, recordAudioBlob, order,
   const onDownload = () => recordAudioBlob && downloadRecordingAudio(recordAudioBlob, correctPercent);
 
   const diffWords = Diff.diffWords(sampleText, recognitionText, { ignoreCase: true });
-  const missingWord = getMissingWords(diffWords).join(', ');
+  const missingWords = getMissingWords(diffWords);
+  const missingWordTitle = `${missingWords.length} words missed:`;
+  const missingWordStr = missingWords.join(', ');
   const correctCount = countCorrectWord(diffWords);
   const totalCount = countWord(sampleText);
   const correctPercent = getPercentage(correctCount, totalCount);
@@ -160,9 +159,11 @@ export default ({ datetime, sampleText, recognitionText, recordAudioBlob, order,
           {correctTitle}
           {speechResult}
         </DiffTextWrapper>
-        <MissingWordTitle>Missing words:</MissingWordTitle>
+        <MissingWordTitle>
+          {missingWordTitle}
+        </MissingWordTitle>
         <MissingWords>
-          {missingWord}
+          {missingWordStr}
         </MissingWords>
       </RecognitionWrapper>
       <LoadingIcon isDisplay={!isDisplayRecognition} />

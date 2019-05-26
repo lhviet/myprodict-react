@@ -14,9 +14,9 @@ import { StoreState } from '^/types';
 
 import PageLayout from '../_PageLayout';
 
-import MeaningSummary from '^/1_components/atoms/MeaningSummary';
-import CardMeaning from '^/1_components/atoms/CardMeaning';
-import CardExampleSentence from '^/1_components/atoms/CardExampleSentence';
+import MeaningSummaryRaw from '^/1_components/atoms/MeaningSummary';
+import CardMeaningRaw from '^/1_components/atoms/CardMeaning';
+import CardExampleSentenceRaw from '^/1_components/atoms/CardExampleSentence';
 import SearchInputField from '^/1_components/atoms/SearchInputField';
 import ListSearchWord from '^/2_containers/components/ListSearchWord';
 import { WordState, actionSetCurrentWordId, actionSearchWord } from '^/3_store/ducks/word';
@@ -24,22 +24,21 @@ import { PronState } from '^/3_store/ducks/pronunciation';
 import { MeaningState } from '^/3_store/ducks/meaning';
 import { UserState } from '^/3_store/ducks/user';
 import { MeaningUsageState } from '^/3_store/ducks/meaning_usage';
-import { MeaningExampleState, actionSearchExamples } from '^/3_store/ducks/meaning_usage_example';
+import { MeaningExampleState } from '^/3_store/ducks/meaning_usage_example';
 
 import { colors, styles } from '^/theme';
 
 const Root = styled.div`
   position: relative;
+  width: 100%;
   height: calc(100vh - 3rem);
   overflow: hidden;
 `;
 const Left = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 30%;
-  max-width: 300px;
+  position: relative;
+  display: inline-block;
+  width: 299px;
+  height: 100%;
   background-color: #fff;
   border-right: solid 1px ${colors.borderGray.toString()};
 `;
@@ -47,13 +46,36 @@ const ListWord = styled(ListSearchWord)`
   height: calc(100% - 3rem);
 `;
 const Right = styled.div`
-  margin-left: 30%;
+  display: inline-block;
+  width: calc(100% - 340px);
   height: 100%;
-  padding: 1rem;
+  padding: 10px 20px 0;
+  vertical-align: top;
   
   overflow-y: auto;
   overscroll-behavior: contain;
   ${styles.scrollbar};
+`;
+const RightBody = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  transition: width ease .1s;
+`;
+const Title = styled.div`
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: ${colors.red.toString()};
+  padding-bottom: 1rem;
+`;
+const MeaningSummary = styled(MeaningSummaryRaw)`
+  margin-bottom: 1rem;
+`;
+const CardExampleSentence = styled(CardExampleSentenceRaw)`
+  margin-bottom: 1rem;
+`;
+const CardMeaning = styled(CardMeaningRaw)`
+  margin-bottom: 1rem;
 `;
 
 const searchDebouncePeriod = 300; // milliseconds
@@ -145,12 +167,15 @@ class PageHome extends React.Component<Props, State> {
       const termExample = _.find(mExample.termExamples, {term: currentWord.value.word});
 
       const wordMeaning: ReactNode = meanings.length > 0 ? (
-        <MeaningSummary meanings={meanings} />
+        <MeaningSummary
+          meanings={meanings}
+          usages={usages}
+          examples={mExample.items}
+        />
       ) : undefined;
       const wordExamples: ReactNode = termExample && termExample.examples.length > 0 ? (
         <CardExampleSentence
           word={currentWord.value.word}
-          wordCustomUrl={currentWord.value.custom_url}
           examples={termExample.examples.slice(0, sampleSentenceNumber)}
         />
       ) : undefined;
@@ -161,24 +186,15 @@ class PageHome extends React.Component<Props, State> {
         <CardMeaning usages={usagesOfMean} examples={mExample.items}/>
       ) : undefined;
 
-      // (Usages & Examples) of Meanings (of Word)
-      const wordMeanings: ReactNode = meanings.length > 0 ?
-        meanings.map(m => (
-          <CardMeaning
-            key={m.keyid}
-            meaning={m.value.mean}
-            usages={_.filter(usages, {value: {meaning_keyid: m.keyid}})}
-            examples={mExample.items}
-          />
-        )) : undefined;
-
       wordInfo = (
-        <>
-          {wordMeaning}
+        <RightBody>
+          <Title>
+            {currentWord.value.word}
+          </Title>
           {wordExamples}
+          {wordMeaning}
           {usagesOfWordNoMeaning}
-          {wordMeanings}
-        </>
+        </RightBody>
       );
     }
 

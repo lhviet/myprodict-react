@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
-import { colors, styles } from '^/theme';
+import { alpha, colors, styles } from '^/theme';
 
 import { countWord } from '^/4_services/word-service';
 
-const wordCountAlpha = 0.8;
-const colorAlpha = 0.9;
 const Root = styled.div`
   position: relative;
   width: 100%;
@@ -22,7 +20,7 @@ const TextArea = styled.textarea.attrs({
   font-family: Roboto, sans-serif;
   font-size: 1.3rem;
   font-weight: 400;
-  color: ${colors.dark.alpha(colorAlpha).toString()};
+  color: ${colors.dark.alpha(alpha.alpha9).toString()};
   ${styles.scrollbar};
   
   :focus {
@@ -35,7 +33,7 @@ const WordCount = styled.span`
   left: 0;
   font-size: 0.8rem;
   font-style: italic;
-  color: ${colors.grey.alpha(wordCountAlpha).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
 `;
 
 interface Props {

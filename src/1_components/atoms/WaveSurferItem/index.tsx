@@ -3,7 +3,7 @@ import React, { RefObject } from 'react';
 import styled from 'styled-components';
 import WaveSurfer from 'wavesurfer.js';
 
-import { colors } from '^/theme';
+import {alpha, colors} from '^/theme';
 
 const alpha8 = .8;
 const waveSurferHeight = 60;
@@ -33,7 +33,7 @@ const PlayBtn = styled.i.attrs({
 })`
   font-size: 1.2rem;
   cursor: pointer;
-  color: ${colors.grey.alpha(alpha8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
   
   :hover {
     color: ${colors.green.toString()};
@@ -42,7 +42,7 @@ const PlayBtn = styled.i.attrs({
 const PlayInfo = styled.div`
   font-size: .8rem;
   line-height: 1.3rem;
-  color: ${colors.grey.alpha(alpha8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
 `;
 
 interface Props {

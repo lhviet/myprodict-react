@@ -6,7 +6,7 @@ import { getEWordClassString, getLocalString, IPronunciation, IWord, MPTypes } f
 
 import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
-import { colors } from '^/theme';
+import {alpha, colors} from '^/theme';
 
 interface RootProps {
   isActive?: boolean;
@@ -18,7 +18,7 @@ const Root = styled.div<RootProps>`
   padding: .6rem .5rem;
   min-height: 4.5rem;
   word-wrap: break-word;
-  border: 1px solid ${colors.borderGray.alpha(.5).toString()};
+  border: 1px solid ${colors.borderGray.alpha(alpha.alpha5).toString()};
   background-clip: border-box;
   background-color: ${({ isActive }) => isActive && colors.bgHighlight.toString()};
   
@@ -47,7 +47,7 @@ const PronunciationTable = styled.table`
 `;
 const PronunciationTableRow = styled.tr`
   >td {
-    border-top: dotted 1px ${colors.borderGray.alpha(.5).toString()};
+    border-top: dotted 1px ${colors.borderGray.alpha(alpha.alpha5).toString()};
   }
   
   :first-child {
@@ -59,7 +59,7 @@ const PronunciationTableRow = styled.tr`
 const PronunciationTableLocal = styled.td`
   width: 1.7rem;
   font-size: .9rem;
-  color: ${colors.grey.alpha(.8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
   padding-top: .25rem;
 `;
 const PronunciationTableTranscript = styled.td``;
@@ -75,7 +75,7 @@ const TranscriptWordClass = styled.span`
   font-style: italic;
   width: 1.5rem;
   display: inline-block;
-  color: ${colors.grey.alpha(.8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
 `;
 const Speaker = styled(IconWithSpinner)`
   position: absolute;
@@ -86,7 +86,7 @@ const Speaker = styled(IconWithSpinner)`
 const Footer = styled.div`
   font-size: .8rem;
   font-style: italic;
-  color: ${colors.grey.alpha(.8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
   margin-top: .2rem;
 `;
 

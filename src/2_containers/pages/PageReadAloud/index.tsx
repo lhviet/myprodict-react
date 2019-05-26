@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { IReadAloud } from 'myprodict-model/lib-esm';
 
 import { StoreState } from '^/types';
-import { colors, styles } from '^/theme';
+import { alpha, colors, styles } from '^/theme';
 
 import FocusEditTextArea from '^/1_components/atoms/FocusEditTextArea';
 import RecordingBtn from '^/1_components/atoms/RecordingBtn';
@@ -21,10 +21,8 @@ import { getWords, getMissingWords } from '^/4_services/word-service';
 
 import PageLayout from '../_PageLayout';
 
-const alpha7 = .7;
 const Root = styled.div`
   position: relative;
-  display: flex;
   width: 100%;
   height: calc(100vh - 3rem);
   overflow: hidden;
@@ -33,20 +31,44 @@ const Root = styled.div`
 interface DisplayProps {
   isDisplay?: boolean;
 }
-const Left = styled.div`
-  width: 30%;
-  max-width: 300px;
+interface LeftProps {
+  isLeftOpen: boolean;
+}
+const Left = styled.div<LeftProps>`
+  position: relative;
+  display: inline-block;
+  width: 299px;
+  height: 100%;
+  margin-left: ${props => props.isLeftOpen ? 0 : '-300px'};
   background-color: #fff;
   border-right: solid 1px ${colors.borderGray.toString()};
-  transition: width ease .3s;
+  transition: margin-left ease .3s;
 `;
-const Right = styled.div`
-  width: 100%;
+const Right = styled.div<LeftProps>`
+  display: inline-block;
+  width: ${props => props.isLeftOpen ? 'calc(100% - 340px)' : 'calc(100% - 40px)'};
+  padding: 10px 20px 0;
   height: 100%;
-  padding: .2rem  1rem;
+  vertical-align: top;
   overflow-y: auto;
   overscroll-behavior: contain;
   ${styles.scrollbar};
+  transition: width ease .3s;
+`;
+
+const HandlerButton = styled.button`
+  width: 1.1rem;
+  height: 4rem;
+  position: absolute;
+  top: calc(50% - 2rem);
+  right: 0;
+  margin-right: -1.1rem;
+  padding: 0;
+  border: solid 1px ${colors.borderGray.toString()};
+  border-radius: 3px;
+  background: white;
+  color: ${colors.grey.toString()};
+  cursor: pointer;
 `;
 
 interface RightBodyProps {
@@ -54,12 +76,12 @@ interface RightBodyProps {
 }
 const RightBody = styled.div<RightBodyProps>`
   width: 100%;
+  max-width: 900px;
   margin-top: ${props => props.isMarginTop && '80px'};
   margin-right: auto;
   margin-left: auto;
   min-width: 400px;
-  max-width: 1200px;
-  transition: width ease .1s, margin-top ease .3s;
+  transition: width ease .1s, margin-top ease .2s;
 `;
 const TextAreaWrapper = styled.div`
   padding: .75rem 1rem .5rem 1rem;
@@ -82,7 +104,7 @@ const SpeechDiffResult = styled(SpeechDiffResultRaw)<DisplayProps>`
   display: ${props => props.isDisplay ? 'flex' : 'none'};
 `;
 const SpeechDiffResultListItem = styled(SpeechDiffResultRaw)`
-  border-bottom: solid 1px ${colors.borderGray.alpha(alpha7).toString()};
+  border-bottom: solid 1px ${colors.borderGray.alpha(alpha.alpha7).toString()};
   margin-top: 0;
   margin-bottom: 0;
 `;
@@ -117,6 +139,8 @@ interface State {
   missingWords: Array<string>;
 
   attempts: Array<SpeechDiffResultProps>;
+
+  isLeftOpen: boolean;
 }
 class PageReadAloud extends React.Component<Props, State> {
   audioChunks: any[] = [];
@@ -145,6 +169,7 @@ class PageReadAloud extends React.Component<Props, State> {
       sampleText: '',
       missingWords: [],
       attempts: [],
+      isLeftOpen: true,
     };
   }
 
@@ -198,6 +223,7 @@ class PageReadAloud extends React.Component<Props, State> {
     this.setState({
       attempts,
       missingWords,
+      isLeftOpen: true,
     });
   }
 
@@ -258,9 +284,13 @@ class PageReadAloud extends React.Component<Props, State> {
     }
   }
 
+  handleLeftHandlerClick = () => {
+    this.setState((prevState) => ({ isLeftOpen: !prevState.isLeftOpen }));
+  }
+
   render() {
     const {
-      recordStatus, isMicAvailable, ra, sampleText, missingWords, attempts,
+      recordStatus, isMicAvailable, ra, sampleText, missingWords, attempts, isLeftOpen,
     }: State = this.state;
 
     const isRecording: boolean = recordStatus === RecordStatus.Recording;
@@ -295,13 +325,20 @@ class PageReadAloud extends React.Component<Props, State> {
 
     const isFirstRecord = attempts.length === 0;
 
+    const handlerButton: ReactNode = (
+      <HandlerButton onClick={this.handleLeftHandlerClick}>
+        <i className={`fa ${isLeftOpen ? 'fa-chevron-left' : 'fa-chevron-right'}`} />
+      </HandlerButton>
+    );
+
     return (
       <PageLayout>
         <Root>
-          <Left>
+          <Left isLeftOpen={isLeftOpen}>
+            {handlerButton}
             <ListSearchWord exactWords={missingWords} />
           </Left>
-          <Right>
+          <Right isLeftOpen={isLeftOpen}>
             <RightBody isMarginTop={!isRecordStopped}>
               <TextAreaWrapper>
                 <FocusEditTextArea value={sampleText} onBlur={this.handleTextBlur} />

@@ -1,18 +1,18 @@
 import * as React from 'react';
 import styled from 'styled-components';
 
-import { colors } from '^/theme';
+import { alpha, colors } from '^/theme';
 
 const Root = styled.i`
   cursor: pointer;
   padding: 0.1rem;
   border: solid 1px transparent;
   border-radius: 50%;
-  color: ${colors.grey.alpha(.8).toString()};
+  color: ${colors.grey.alpha(alpha.alpha8).toString()};
   transition: ease .3s;
   
   :hover {
-    border-color: ${colors.grey.alpha(.8).toString()};
+    border-color: ${colors.grey.alpha(alpha.alpha8).toString()};
   }
 `;
 

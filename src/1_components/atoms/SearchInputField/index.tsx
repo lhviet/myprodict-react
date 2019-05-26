@@ -1,12 +1,9 @@
 import * as React from 'react';
 import styled from 'styled-components';
 
-import { colors } from '^/theme';
+import {alpha, colors} from '^/theme';
 import IconWithSpinner, { IconType } from '^/1_components/atoms/IconWithSpinner';
 
-const alpha5 = .5;
-const alpha6 = .6;
-const alpha8 = .8;
 const Root = styled.div`
   position: relative;
   width: 100%;
@@ -26,7 +23,7 @@ const SearchInput = styled.input.attrs({
   background-color: #fff;
   background-clip: padding-box;
   border: none;
-  border-bottom: solid 2px ${colors.grey.alpha(alpha5).toString()};
+  border-bottom: solid 2px ${colors.grey.alpha(alpha.alpha5).toString()};
   transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   
   :hover {
@@ -38,11 +35,11 @@ const SearchIcon = styled(IconWithSpinner)`
   right: 0.5rem;
   top: 0.5rem;
   font-size: 1.3rem;
-  color: ${colors.blueDark.alpha(alpha6).toString()};
+  color: ${colors.blueDark.alpha(alpha.alpha6).toString()};
   cursor: pointer;
   
   :hover {
-    color: ${colors.blueDark.alpha(alpha8).toString()};
+    color: ${colors.blueDark.alpha(alpha.alpha8).toString()};
   }
 `;
 

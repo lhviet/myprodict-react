@@ -1,4 +1,5 @@
 // tslint:disable
+import * as _ from 'lodash-es';
 import Color from 'color';
 import { css } from 'styled-components';
 
@@ -14,11 +15,18 @@ export const colors = {
   blue: new Color('rgb(82, 145, 248)'),
   blueDark: new Color('rgb(54,78,148)'),
   green: new Color('rgb(104, 153, 80)'),
+  yellow: new Color('rgb(255,247,12)'),
 
   primaryBtn: new Color('#007aee'),
   primaryBtnHover: new Color('#0066c9'),
   primaryBtnBorder: new Color('#5597e3'),
 };
+export const alpha: { [a: string]: number } = _.zipObject(
+  _.times(10, (i) => `alpha${i}`),
+  _.map(
+    _.range(0, 1, 0.1), n => _.round(n, 1)
+  )
+);
 
 export const zIndex = {
   topbarNav: 1030,

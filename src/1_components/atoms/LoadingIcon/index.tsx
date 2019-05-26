@@ -1,9 +1,8 @@
 import * as React from 'react';
 import styled from 'styled-components';
 
-import { colors } from '^/theme';
+import { alpha, colors } from '^/theme';
 
-const trackAlpha = 0.3;
 const Root = styled.span`
   display: inline-block;
   font-size: 2rem;
@@ -12,9 +11,9 @@ const Root = styled.span`
   width: 2em;
   height: 2em;
   border-radius: 50%;
-  border-top: .2em solid ${colors.grey.alpha(trackAlpha).toString()};
-  border-right: .2em solid ${colors.grey.alpha(trackAlpha).toString()};
-  border-bottom: .2em solid ${colors.grey.alpha(trackAlpha).toString()};
+  border-top: .2em solid ${colors.grey.alpha(alpha.alpha3).toString()};
+  border-right: .2em solid ${colors.grey.alpha(alpha.alpha3).toString()};
+  border-bottom: .2em solid ${colors.grey.alpha(alpha.alpha3).toString()};
   border-left: .2em solid ${colors.grey.toString()};
   -webkit-transform: translateZ(0);
   -ms-transform: translateZ(0);
