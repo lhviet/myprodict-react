@@ -1,5 +1,5 @@
 import * as _ from 'lodash-es';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, RefObject } from 'react';
 import { Action, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import { capitalize } from 'lodash-es';
@@ -46,9 +46,9 @@ const Left = styled.div<LeftProps>`
 `;
 const Right = styled.div<LeftProps>`
   display: inline-block;
+  padding: 10px 20px;
   width: ${props => props.isLeftOpen ? 'calc(100% - 340px)' : 'calc(100% - 40px)'};
-  padding: 10px 20px 0;
-  height: 100%;
+  height: calc(100% - 20px);
   vertical-align: top;
   overflow-y: auto;
   overscroll-behavior: contain;

@@ -45,10 +45,10 @@ const NavBarTop: React.FunctionComponent<NavBarTopProps> = (
 ) => {
   const adminMenus: ReactNode = isLoggedIn && isAdminOrSuperAdmin(userRole) ? (
     <>
-      <NavMenu to="/word/add" className={'a-bright ml-3'} activeClassName={'active'}>
+      <NavMenu to="/word/add" className={'a-bright'} activeClassName={'active'}>
         <i className={'fa fa-plus-circle'} />
       </NavMenu>
-      <NavMenu to="/word/admin" className={'a-bright ml-3'} activeClassName={'active'}>
+      <NavMenu to="/word/admin" className={'a-bright'} activeClassName={'active'}>
         <i className={'fa fa-list-ul'} />
       </NavMenu>
     </>

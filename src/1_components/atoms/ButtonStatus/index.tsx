@@ -39,7 +39,7 @@ export default ({ statusNumber, onClickStatus }: ButtonStatusProps) => {
   ));
 
   return (
-    <div className="btn-group btn-group-sm" role="group" aria-label="Status">
+    <div role="group" aria-label="Status">
       {btns}
     </div>
   );

@@ -47,9 +47,9 @@ const ListWord = styled(ListSearchWord)`
 `;
 const Right = styled.div`
   display: inline-block;
+  padding: 10px 20px;
   width: calc(100% - 340px);
-  height: 100%;
-  padding: 10px 20px 0;
+  height: calc(100% - 20px);
   vertical-align: top;
   
   overflow-y: auto;
@@ -63,10 +63,10 @@ const RightBody = styled.div`
   transition: width ease .1s;
 `;
 const Title = styled.div`
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 500;
-  color: ${colors.red.toString()};
-  padding-bottom: 1rem;
+  color: white;
+  padding-bottom: 1.2rem;
 `;
 const MeaningSummary = styled(MeaningSummaryRaw)`
   margin-bottom: 1rem;
@@ -75,7 +75,7 @@ const CardExampleSentence = styled(CardExampleSentenceRaw)`
   margin-bottom: 1rem;
 `;
 const CardMeaning = styled(CardMeaningRaw)`
-  margin-bottom: 1rem;
+  padding: 1rem;
 `;
 
 const searchDebouncePeriod = 300; // milliseconds
@@ -188,10 +188,10 @@ class PageHome extends React.Component<Props, State> {
 
       wordInfo = (
         <RightBody>
+          {wordExamples}
           <Title>
             {currentWord.value.word}
           </Title>
-          {wordExamples}
           {wordMeaning}
           {usagesOfWordNoMeaning}
         </RightBody>

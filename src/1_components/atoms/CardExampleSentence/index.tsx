@@ -17,24 +17,33 @@ const Root = styled.div`
 `;
 const Title = styled.div`
   padding: .6rem .5rem;
-  font-size: .9rem;
   font-weight: 400;
-  border-bottom: solid 1px ${colors.borderGray.alpha(alpha.alpha5).toString()};
 `;
-const ExampleList = styled.ul`
-  list-style: none;
+const ExampleTable = styled.table`
+  border-collapse: collapse;
   line-height: 1.2;
   padding: 0 .5rem;
   margin-bottom: 0.4rem;
-`;
-const ListItem = styled.li`
-  padding: .6rem .5rem;
-  line-height: 1.2;
-`;
-const ListItemOrder = styled.span`
-  padding-right: .5rem;
-  font-size: .8rem;
-  color: ${colors.grey.toString()};
+  
+  tr {
+    padding: .6rem .5rem;
+    line-height: 1.2;
+  }
+  
+  td {
+    padding: .5rem;
+    border: solid 1px ${colors.borderGray.alpha(alpha.alpha5).toString()};
+    
+    :first-child {
+      width: 1rem;
+      text-align: center;
+      color: ${colors.grey.toString()};
+      border-left-style: none;
+    }
+    :last-child {
+      border-right-style: none;
+    }
+  };
 `;
 const HighlightWord = styled.span`
   margin-right: .3rem;
@@ -72,10 +81,10 @@ export default ({ word, examples, className }: Props) => {
     examples.slice(0, exampleNumber) : examples;
   const shortExampleItems: ReactNode = shortExamples
     .map((ex, index) => (
-      <ListItem key={index}>
-        <ListItemOrder>{index + 1}.</ListItemOrder>
-        {highlightWord(ex, word)}
-      </ListItem>
+      <tr key={index}>
+        <td>{index + 1}</td>
+        <td>{highlightWord(ex, word)}</td>
+      </tr>
     ));
 
   const expandButton: ReactNode = examples.length > exampleNumber ? (
@@ -92,9 +101,11 @@ export default ({ word, examples, className }: Props) => {
   return (
     <Root className={className}>
       <Title>Examples - {examples.length}</Title>
-      <ExampleList>
-        {shortExampleItems}
-      </ExampleList>
+      <ExampleTable>
+        <tbody>
+          {shortExampleItems}
+        </tbody>
+      </ExampleTable>
       {expandButton}
     </Root>
   );

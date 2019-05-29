@@ -58,9 +58,13 @@ const MeaningTitle = styled.span`
   color: ${colors.blue.alpha(alpha.alpha9).toString()};
 `;
 const CardMeaning = styled(CardMeaningRaw)`
-  padding: .5rem 0 .75rem 1rem;
+  padding: 0 0 .75rem 1rem;
   margin-bottom: .75rem;
   border-bottom: 1px dotted ${colors.borderGray.alpha(alpha.alpha5).toString()};
+  
+  :last-child {
+    border-bottom: none;
+  }
 `;
 const ButtonExpandItem = styled(ButtonExpand)`
   float: right;

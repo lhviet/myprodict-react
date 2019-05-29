@@ -11,7 +11,6 @@ export default (props: SelectWordClassProps) => {
 
   return (
     <select
-      className="form-control"
       value={props.value}
       onChange={handleWClassChange}
     >

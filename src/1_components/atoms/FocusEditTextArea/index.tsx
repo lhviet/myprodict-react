@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as _ from 'lodash-es';
+import React, { RefObject } from 'react';
 import styled from 'styled-components';
 
 import { alpha, colors, styles } from '^/theme';
@@ -12,9 +13,9 @@ const Root = styled.div`
 `;
 const TextArea = styled.textarea.attrs({
   placeholder: 'Paste or type the sentences you want to practice here.',
-  rows: 6,
 })`
   width: 100%;
+  padding: 0;
   border: none;
   resize: vertical;
   font-family: Roboto, sans-serif;
@@ -26,6 +27,11 @@ const TextArea = styled.textarea.attrs({
   :focus {
     outline: none;
   }
+`;
+const HiddenTextArea = styled(TextArea).attrs({
+  rows: 1,
+})`
+  height: 0;
 `;
 const WordCount = styled.span`
   position: absolute;
@@ -41,33 +47,67 @@ interface Props {
   className?: string;
   onBlur?(value: string): void;
 }
-export default (props: Props) => {
-  const [isReadOnly, setReadOnly] = useState(true);
-  const text = props.value || '';
+interface State {
+  isReadOnly: boolean;
+}
+export default class FocusEditTextArea extends React.Component<Props, State> {
+  ref: RefObject<HTMLTextAreaElement>;
+  refHidden: RefObject<HTMLTextAreaElement>;
 
-  const wordNumber = countWord(text);
-  const wordNumberLabel = `${wordNumber} word${wordNumber > 1 ? 's' : ''}`;
+  constructor(props: Readonly<Props>) {
+    super(props);
 
-  const onClick = () => setReadOnly(false);
-  const onBlur = () => setReadOnly(true);
-  const onChange = ({ currentTarget }: React.SyntheticEvent<HTMLTextAreaElement>) => {
-    if (props.onBlur) {
-      props.onBlur(currentTarget.value);
+    this.ref = React.createRef();
+    this.refHidden = React.createRef();
+
+    this.state = {
+      isReadOnly: true,
+    };
+  }
+
+  componentDidUpdate(): void {
+    this.resizeTextArea();
+  }
+
+  resizeTextArea = () => {
+    if (this.ref.current && this.refHidden.current) {
+      const newHeight: number = this.refHidden.current.scrollHeight;
+      this.ref.current.setAttribute('style', `height: ${newHeight}px`);
     }
-  };
+  }
 
-  return (
-    <Root>
-      <TextArea
-        value={text}
-        className={props.className}
-        readOnly={isReadOnly}
-        onClick={onClick}
-        onBlur={onBlur}
-        onMouseOut={onBlur}
-        onChange={onChange}
-      />
-      <WordCount>{wordNumberLabel}</WordCount>
-    </Root>
-  );
-};
+  onClick = () => this.setState({ isReadOnly: false });
+  onBlur = () => this.setState({ isReadOnly: true });
+  onChange = ({ currentTarget }: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    this.resizeTextArea();
+    if (this.props.onBlur) {
+      this.props.onBlur(currentTarget.value);
+    }
+  }
+
+  render() {
+    const { value, className }: Props = this.props;
+    const { isReadOnly }: State = this.state;
+    const text = value || '';
+
+    const wordNumber = countWord(text);
+    const wordNumberLabel = `${wordNumber} word${wordNumber > 1 ? 's' : ''}`;
+
+    return (
+      <Root>
+        <HiddenTextArea value={text} ref={this.refHidden} />
+        <TextArea
+          value={text}
+          className={className}
+          readOnly={isReadOnly}
+          onClick={this.onClick}
+          onBlur={this.onBlur}
+          onMouseOut={this.onBlur}
+          onChange={this.onChange}
+          ref={this.ref}
+        />
+        <WordCount>{wordNumberLabel}</WordCount>
+      </Root>
+    );
+  }
+}

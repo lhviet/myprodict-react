@@ -4,7 +4,8 @@ import Color from 'color';
 import { css } from 'styled-components';
 
 export const colors = {
-  bgBlue: new Color('#1f759e'),
+  bgDark: new Color('#585b5f'),
+  bgBlue: new Color('#343a40'),
   bgHighlight: new Color('rgb(253, 255, 228)'),
 
   borderGray: new Color('rgb(179, 179, 179)'),

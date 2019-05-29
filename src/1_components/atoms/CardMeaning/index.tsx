@@ -1,7 +1,9 @@
-import React from 'react';
-import { getEWordClassString, IMeaningExample, IMeaningUsage } from 'myprodict-model/lib-esm';
+import React, { ReactNode } from 'react';
+import { IMeaningExample, IMeaningUsage } from 'myprodict-model/lib-esm';
 import * as _ from 'lodash-es';
 import styled from 'styled-components';
+
+import { alpha, colors } from '^/theme';
 
 const Root = styled.div`
   position: relative;
@@ -11,6 +13,40 @@ const Root = styled.div`
   word-wrap: break-word;
   background-clip: border-box;
   background-color: #fff;
+`;
+const UsageItemWrapper = styled.div`
+  padding-bottom: .3rem;
+  margin-bottom: .3rem;
+  border-bottom: dashed 1px ${colors.borderGray.alpha(alpha.alpha6).toString()};
+  
+  :last-child {
+    border-bottom: none;
+  }
+`;
+const UsageItemTitle = styled.div`
+  font-size: 0.9rem;
+  font-style: italic;
+  color: ${colors.grey.toString()};
+`;
+const UsageItemCollocation = styled.span`
+  margin-left: .4rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  font-style: normal;
+  color: ${colors.dark.toString()};
+`;
+const UsageExplanationWrapper = styled.div`
+  margin-left: 1rem;
+`;
+const Explanation = styled.div`
+  line-height: 2;
+  font-weight: 500;
+  color: ${colors.dark.toString()};
+`;
+const Sentence = styled.div`
+  margin-left: 0.5rem;
+  line-height: 1.5;
+  color: ${colors.grey.toString()};
 `;
 
 interface Props {
@@ -23,32 +59,40 @@ export default ({ usages, examples, className }: Props) => {
   const usageSubjs = _.uniq(_.map(usages, 'value.usage'));
   usageSubjs.sort((a: string, b: string) => a.length - b.length);
 
+  const wordUsages: ReactNode = usageSubjs.map((uSubj, index) => {
+    const usageTitle: ReactNode = uSubj ? (
+      <UsageItemTitle>
+        Use as/with <UsageItemCollocation>{uSubj}</UsageItemCollocation>
+      </UsageItemTitle>
+    ) : undefined;
+
+    const usageExplanation: ReactNode = usages
+      .filter(u => u.value.usage === uSubj)
+      .map(u => (
+        <UsageExplanationWrapper key={u.keyid}>
+          <Explanation>
+            {u.value.explanation}
+          </Explanation>
+          {
+            _.filter(examples, {value: {meaning_usage_keyid: u.keyid}})
+              .map(ex => <Sentence key={ex.keyid}>
+                - {ex.value.sentence}
+              </Sentence>)
+          }
+        </UsageExplanationWrapper>
+      ));
+
+    return (
+      <UsageItemWrapper key={index}>
+        {usageTitle}
+        {usageExplanation}
+      </UsageItemWrapper>
+    );
+  });
+
   return (
     <Root className={className}>
-      {usageSubjs.map((uSubj, index) =>
-        <div key={index} className={'mb-3 border-bottom'}>
-          <div className={'text-uppercase font-weight-700'}>{uSubj}</div>
-          <table className={'table table-hover'}>
-            <tbody>
-            {usages.filter(u => u.value.usage === uSubj)
-              .map(u => <tr key={u.keyid} className={'pl-2 '}>
-                <td>
-                  <div className={'pos-r'}>
-                    {u.value.explanation}
-                    <div className={'text-muted fs-d8e float-right font-italic'}>
-                      {getEWordClassString(u.value.word_class)}
-                    </div>
-                  </div>
-                  {_.filter(examples, {value: {meaning_usage_keyid: u.keyid}})
-                    .map(ex => <div key={ex.keyid} className={'text-muted font-italic pl-3'}>
-                      - {ex.value.sentence}
-                    </div>)}
-                </td>
-              </tr>)}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {wordUsages}
     </Root>
   );
 };
